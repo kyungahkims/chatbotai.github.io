@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Popup</title>
+</head>
+
+<body>
+    <iframe src="https://m.dabagirl.co.kr/" style="position:fixed; top:0; left:0; width:100%; height:100vh; border:none; z-index:0;"></iframe>
+    <div id="scroll-trap" style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:1; display:none;"></div>
+
+    <div id="scroll-trap" style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:1; display:none;"></div>
+
+    <!-- ================================================================
+     AD BANNER POPUP
+================================================================ -->
+    <svg width="0" height="0" style="position:absolute">
+        <defs>
+            <linearGradient id="cloud-grad" x1="0" y1="0" x2="24" y2="24">
+                <stop stop-color="#00d2ff" />
+                <stop offset="1" stop-color="#0088ff" />
+            </linearGradient>
+            <linearGradient id="shield-grad" x1="0" y1="0" x2="24" y2="24">
+                <stop stop-color="#7b8aff" />
+                <stop offset="1" stop-color="#6c22f5" />
+            </linearGradient>
+            <linearGradient id="ticket-grad" x1="0" y1="0" x2="24" y2="24">
+                <stop stop-color="#a880ff" />
+                <stop offset="1" stop-color="#d1a8ff" />
+            </linearGradient>
+        </defs>
+    </svg>
+    <div class="mb_ad-panel" id="mb_adPanel">
+        <div class="mb_mb_ad-panel-head">
+            <div class="mb_ad-header-left">
+                <div class="mb_ad-header-top">
+                    <div id="mb_fab">
+                        <canvas id="mb_bot-canvas"></canvas>
+                    </div>
+                    <div class="mb_ad-title">
+                        오늘의 추천 코디
+                    </div>
+                </div>
+                <div class="mb_ad-subtitle">
+                    AI가 이 상품과 어울리는 코디를 추천했어요
+                </div>
+            </div>
+            <button class="mb_ad-close-btn" id="mb_adCloseBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="mb_ad-recommend-container">
+            <div class="mb_ad-recommend-section">
+                <div class="mb_ad-section-title cyan">상의</div>
+                <div class="mb_ad-card-row">
+                    <div class="mb_ad-product-card">
+                        <div class="mb_ad-product-image"></div>
+                        <div class="mb_ad-product-info">
+                            <div class="mb_ad-product-name">니트 탑</div>
+                            <div class="mb_ad-product-price">39,000</div>
+                        </div>
+                    </div>
+                    <div class="mb_ad-product-card">
+                        <div class="mb_ad-product-image"></div>
+                        <div class="mb_ad-product-info">
+                            <div class="mb_ad-product-name">셔츠</div>
+                            <div class="mb_ad-product-price">45,000</div>
+                        </div>
+                    </div>
+                    <div class="mb_ad-product-card">
+                        <div class="mb_ad-product-image"></div>
+                        <div class="mb_ad-product-info">
+                            <div class="mb_ad-product-name">가디건</div>
+                            <div class="mb_ad-product-price">52,000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb_ad-recommend-section">
+                <div class="mb_ad-section-title purple">하의</div>
+                <div class="mb_ad-card-row">
+                    <div class="mb_ad-product-card">
+                        <div class="mb_ad-product-image"></div>
+                        <div class="mb_ad-product-info">
+                            <div class="mb_ad-product-name">슬랙스</div>
+                            <div class="mb_ad-product-price">48,000</div>
+                        </div>
+                    </div>
+                    <div class="mb_ad-product-card">
+                        <div class="mb_ad-product-image"></div>
+                        <div class="mb_ad-product-info">
+                            <div class="mb_ad-product-name">데님</div>
+                            <div class="mb_ad-product-price">55,000</div>
+                        </div>
+                    </div>
+                    <div class="mb_ad-product-card">
+                        <div class="mb_ad-product-image"></div>
+                        <div class="mb_ad-product-info">
+                            <div class="mb_ad-product-name">스커트</div>
+                            <div class="mb_ad-product-price">42,000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+    <style>
+        /* ================================================================
+           AD BANNER POPUP - NEW LAYOUT
+           START: Popup CSS
+        ================================================================ */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'SamsungOne', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            background: #fff;
+            color: #000;
+        }
+
+        .mb_ad-panel {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            width: min(480px, 100vw);
+            max-height: 66vh;
+            display: flex;
+            flex-direction: column;
+            background: #14141D;
+            border-radius: 30px 30px 0 0;
+            padding: 16px 20px 16px 20px;
+            z-index: 99001;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6), inset 0 2px 10px rgba(255, 255, 255, 0.05);
+            transition: transform 0.5s cubic-bezier(0.25, 1.2, 0.3, 1);
+            color: #FFFFFF;
+            font-family: 'SamsungOne', 'Noto Sans KR', sans-serif;
+        }
+
+        .mb_ad-panel.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .mb_ad-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 30px 30px 0 0;
+            padding: 2px 2px 0 2px;
+            background: linear-gradient(90deg, #6c22f5, #00d2ff);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .mb_ad-panel.show::before {
+            animation: border-pop 1.5s cubic-bezier(0.25, 1.2, 0.3, 1) 0.5s forwards, border-fadeout 1s ease 3s forwards;
+        }
+
+        @keyframes border-fadeout {
+            to {
+                opacity: 0;
+                filter: none;
+            }
+        }
+
+        @keyframes border-pop {
+            0% {
+                opacity: 0;
+                filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0)) brightness(1);
+            }
+
+            40% {
+                opacity: 1;
+                filter: drop-shadow(0 0 25px rgba(0, 229, 255, 1)) drop-shadow(0 0 15px rgba(108, 34, 245, 0.8)) brightness(1.8);
+            }
+
+            100% {
+                opacity: 1;
+                filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.8)) drop-shadow(0 0 6px rgba(108, 34, 245, 0.6)) brightness(1);
+            }
+        }
+
+        .mb_mb_ad-panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .mb_ad-header-left {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+
+        .mb_ad-header-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mb_ad-ai-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 1.5px solid #6c22f5;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, rgba(108, 34, 245, 0.2), rgba(0, 210, 255, 0.1));
+            color: #00d2ff;
+            box-shadow: 0 0 10px rgba(108, 34, 245, 0.3), inset 0 0 10px rgba(0, 210, 255, 0.2);
+            font-family: 'Arial Black', sans-serif;
+            flex-shrink: 0;
+        }
+
+        .mb_mb_ad-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .mb_ad-eyebrow {
+            font-size: 14px;
+            color: #7b8aff;
+            font-weight: 500;
+        }
+
+        .mb_ad-title {
+            font-size: 16px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #00E5FF, #b077ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            letter-spacing: -0.3px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            word-break: keep-all;
+            text-overflow: ellipsis;
+        }
+
+        .mb_ad-subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+            margin-left: 2px;
+            letter-spacing: -0.2px;
+        }
+
+        .mb_mb_ad-title-star {
+            width: 18px;
+            height: 18px;
+            color: #d1a8ff;
+        }
+
+        .mb_ad-close-btn {
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            font-family: inherit;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .mb_ad-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .mb_ad-close-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: #888;
+            stroke-width: 1.5;
+        }
+
+        #mb_fab {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 0.25px solid transparent;
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
+            outline: none;
+            padding: 0;
+            box-sizing: border-box;
+            background: linear-gradient(90deg, rgba(0, 229, 255, 0.6), rgba(255, 51, 204, 0.6)) border-box;
+            transition: transform 0.18s ease, box-shadow 0.3s ease;
+            overflow: visible;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            #mb_fab {
+                width: 44px;
+                height: 44px;
+            }
+        }
+
+        .mb_ad-recommend-container {
+            padding: 0px 2px 10px 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+            max-height: calc(100% - 70px);
+        }
+
+        .mb_ad-recommend-container::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        .mb_ad-recommend-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .mb_ad-recommend-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .mb_ad-recommend-section {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mb_ad-section-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin-left: 2px;
+        }
+
+        .mb_ad-section-title.cyan {
+            color: #00E5FF;
+        }
+
+        .mb_ad-section-title.purple {
+            color: #b077ff;
+        }
+
+        .mb_ad-card-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mb_ad-product-card {
+            background: #1A1A24;
+            border-radius: 8px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mb_ad-product-image {
+            background: url('https://www.dabagirl.co.kr/web/product/big/202105/04ff60dbb9fa51e3c47fc8e4bdc27c08.jpg') center/cover no-repeat;
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .mb_ad-product-info {
+            padding: 5px 6px 6px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .mb_ad-product-name {
+            color: #b3b3b3;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .mb_ad-product-price {
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        #mb_bot-canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: block;
+            border-radius: 50%;
+            z-index: 2;
+            animation: canvas-spin 5s linear infinite;
+        }
+
+        @keyframes canvas-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .mb_ad-speech-bubble {
+            position: relative;
+            background: rgba(30, 30, 50, 0.6);
+            border: 1px solid rgba(108, 34, 245, 0.5);
+            border-radius: 10px;
+            padding: 8px 13px;
+            flex: 1;
+            overflow-y: hidden;
+            height: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+        }
+
+        .mb_ad-speech-bubble::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .mb_ad-speech-bubble::-webkit-scrollbar-track {
+            background: rgba(30, 30, 50, 0.4);
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .mb_ad-speech-bubble::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00d2ff, #6c22f5);
+            border-radius: 8px;
+        }
+
+        .mb_ad-speech-bubble.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .mb_ad-speech-text {
+            font-size: 14px;
+            color: #eaeaea;
+            font-weight: 500;
+            line-height: 1.3;
+            word-break: keep-all;
+        }
+
+        .mb_ad-typing-dots {
+            display: inline-flex;
+            gap: 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .mb_ad-typing-dots.show {
+            opacity: 1;
+        }
+
+        .mb_ad-typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #8e62ff;
+            animation: dot-blink 1.4s infinite ease-in-out both;
+        }
+
+        .mb_ad-typing-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .mb_ad-typing-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes dot-blink {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mb_ad-panel {
+                width: 100%;
+            }
+
+            .mb_ad-panel::before {}
+
+            .mb_ad-eyebrow {
+                font-size: 12px;
+            }
+
+            .mb_ad-title {
+                font-size: 16px;
+            }
+
+            .mb_ad-ai-badge {
+                width: 44px;
+                height: 44px;
+                font-size: 16px;
+                border-radius: 50%;
+            }
+
+            #mb_fab {
+                width: 44px;
+                height: 44px;
+            }
+
+            .mb_ad-chatbot-area {
+                gap: 12px;
+            }
+
+            .mb_ad-speech-bubble {
+                padding: 8px;
+                height: 75px;
+                border-radius: 10px;
+            }
+
+        }
+
+        /* END: Popup CSS */
+    </style>
+
+    <script>
+        /* ---------- AD Banner ---------- */
+        const panel = document.getElementById('mb_adPanel');
+        const closeBtn = document.getElementById('mb_adCloseBtn');
+
+        function mb_mb_closeAdClickOutside(e) {
+            if (!panel.contains(e.target)) {
+                mb_closeAd();
+            }
+        }
+
+        function mb_closeAd() {
+            panel.classList.remove('show');
+            const scrollTrap = document.getElementById('scroll-trap');
+            if (scrollTrap) scrollTrap.style.display = 'none';
+            
+            window.removeEventListener('scroll', mb_closeAd);
+            window.removeEventListener('wheel', mb_closeAd);
+            window.removeEventListener('touchmove', mb_closeAd);
+            window.removeEventListener('blur', mb_closeAd);
+            document.removeEventListener('click', mb_mb_closeAdClickOutside);
+        }
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function mb_runAdAnimation() {
+            window.mb_botState.isThinking = true;
+            panel.classList.add('show');
+            
+            setTimeout(() => {
+                const scrollTrap = document.getElementById('scroll-trap');
+                if (scrollTrap) scrollTrap.style.display = 'block';
+                
+                if (scrollTrap) {
+                    scrollTrap.addEventListener('wheel', mb_closeAd, { passive: true });
+                    scrollTrap.addEventListener('touchmove', mb_closeAd, { passive: true });
+                    scrollTrap.addEventListener('click', mb_closeAd);
+                }
+                
+                window.addEventListener('scroll', mb_closeAd, { passive: true });
+                window.addEventListener('wheel', mb_closeAd, { passive: true });
+                window.addEventListener('touchmove', mb_closeAd, { passive: true });
+                window.addEventListener('blur', mb_closeAd);
+                document.addEventListener('click', mb_mb_closeAdClickOutside);
+            }, 3000);
+        }
+
+        setTimeout(() => {
+            mb_runAdAnimation();
+            setTimeout(() => {
+                window.mb_botState.isThinking = false; }, 3000);
+        }, 300);
+
+        if (closeBtn) closeBtn.addEventListener('click', mb_closeAd);
+
+        /* AI 챗봇 캔버스 로직 */
+        (function () {
+            const c = document.getElementById('mb_bot-canvas');
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            let w, h, cx, cy, baseR;
+
+            function resize() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = c.parentElement.getBoundingClientRect();
+                w = rect.width;
+                h = rect.height;
+                if (w === 0) {
+                    w = 48; h = 48;
+                }
+                c.width = w * dpr;
+                c.height = h * dpr;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(dpr, dpr);
+                cx = w / 2;
+                cy = h / 2;
+                baseR = Math.min(w, h) * 0.48;
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            let audioLevel = 0;
+            const ribbons = [
+                { r: 255, g: 30, b: 100, rx: 0.75, ry: 0.28, ox: -0.05, oy: 0.2, rot: 0.15, spd: 0.7, dir: 1, alpha: 0.6 },
+                { r: 40, g: 255, b: 150, rx: 0.75, ry: 0.28, ox: 0.05, oy: -0.2, rot: -0.15, spd: 0.6, dir: -1, alpha: 0.5 },
+                { r: 0, g: 220, b: 255, rx: 0.8, ry: 0.3, ox: 0.1, oy: 0.0, rot: -0.3, spd: 0.9, dir: 1, alpha: 0.4 },
+                { r: 120, g: 30, b: 255, rx: 0.85, ry: 0.4, ox: -0.1, oy: 0.15, rot: 0.25, spd: 0.8, dir: -1, alpha: 0.5 },
+                { r: 255, g: 255, b: 255, rx: 0.7, ry: 0.2, ox: 0.0, oy: 0.0, rot: 0.0, spd: 1.0, dir: 1, alpha: 0.32 },
+                { r: 0, g: 120, b: 255, rx: 0.9, ry: 0.6, ox: 0.0, oy: -0.1, rot: 0.35, spd: 0.7, dir: -1, alpha: 0.4 },
+                { r: 255, g: 80, b: 180, rx: 0.75, ry: 0.25, ox: 0.15, oy: -0.1, rot: 0.5, spd: 1.2, dir: 1, alpha: 0.55 },
+                { r: 0, g: 255, b: 220, rx: 0.65, ry: 0.18, ox: -0.12, oy: 0.08, rot: -0.6, spd: 1.4, dir: -1, alpha: 0.5 },
+                { r: 120, g: 30, b: 255, rx: 0.85, ry: 0.4, ox: -0.1, oy: 0.15, rot: 0.25, spd: 0.8, dir: -1, alpha: 0.5 },
+                { r: 40, g: 255, b: 150, rx: 0.75, ry: 0.28, ox: 0.05, oy: -0.2, rot: -0.15, spd: 0.6, dir: -1, alpha: 0.5 },
+                { r: 0, g: 220, b: 255, rx: 0.8, ry: 0.3, ox: 0.1, oy: 0.0, rot: -0.3, spd: 0.9, dir: 1, alpha: 0.4 }
+            ];
+
+            let lastT = 0;
+            let effectiveTime = 0;
+            let auraIntensity = 0;
+            window.mb_botState = { isThinking: false };
+
+            function draw(t) {
+                requestAnimationFrame(draw);
+                let dt = t - lastT;
+                if (lastT === 0) dt = 16;
+                lastT = t;
+
+                if (window.mb_botState.isThinking) {
+                    auraIntensity += (1 - auraIntensity) * 0.08;
+                } else {
+                    auraIntensity += (0 - auraIntensity) * 0.08;
+                }
+
+                let speedMult = 1 + ((3.5 + Math.sin(t * 0.006) * 2.5) - 1) * auraIntensity;
+
+                if (auraIntensity > 0.01) {
+                    let pulse = Math.sin(t * 0.006) * 0.5 + 0.5;
+                    let ringAngle = (t * 0.1) % 360;
+                    let spread = 25 + pulse * 60;
+                    let wAlpha = 1.0 * auraIntensity;
+                    let c1Alpha = 1.0 * auraIntensity;
+                    let pAlpha = 0.9 * auraIntensity;
+                    let c2Alpha = 0.7 * auraIntensity;
+                    let baseAlpha = Math.max(0, 1 - auraIntensity);
+
+                    document.getElementById('mb_fab').style.background = `
+                        conic-gradient(from ${ringAngle}deg, rgba(255, 255, 255, ${1.0 * auraIntensity}) 0%, rgba(220, 250, 255, ${0.8 * auraIntensity}) 50%, rgba(255, 255, 255, ${1.0 * auraIntensity}) 100%) border-box,
+                        linear-gradient(90deg, rgba(0, 229, 255, ${0.6 * baseAlpha}), rgba(255, 51, 204, ${0.6 * baseAlpha})) border-box
+                    `;
+                    document.getElementById('mb_fab').style.boxShadow = `
+                        0 0 ${(5 + pulse * 5) * auraIntensity}px rgba(255, 255, 255, ${wAlpha}),
+                        0 0 ${(15 + pulse * 20) * auraIntensity}px rgba(255, 255, 255, ${wAlpha}),
+                        0 0 ${(spread * 0.8) * auraIntensity}px rgba(255, 255, 255, ${wAlpha * 0.9}),
+                        0 0 ${spread * auraIntensity}px rgba(240, 255, 255, ${c1Alpha}),
+                        0 0 ${(spread * 1.5) * auraIntensity}px rgba(150, 245, 255, ${pAlpha}),
+                        0 0 ${(spread * 2.5) * auraIntensity}px rgba(0, 229, 255, ${c2Alpha}),
+                        0 0 15px rgba(0, 229, 255, ${0.5 * baseAlpha}),
+                        0 0 15px rgba(255, 51, 204, ${0.3 * baseAlpha}),
+                        0 0 30px rgba(0, 229, 255, ${0.3 * baseAlpha}),
+                        inset 0 0 15px rgba(0, 229, 255, ${0.1 * baseAlpha})
+                    `;
+                } else {
+                    if (document.getElementById('mb_fab').style.background) {
+                        document.getElementById('mb_fab').style.background = '';
+                        document.getElementById('mb_fab').style.boxShadow = '';
+                    }
+                }
+
+                effectiveTime += dt * Math.max(0.1, speedMult);
+
+                ctx.clearRect(0, 0, w, h);
+
+                const R = baseR * (1 + audioLevel * 0.15);
+                const time = effectiveTime * 0.0008;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, R, 0, Math.PI * 2);
+                ctx.clip();
+
+                ctx.fillStyle = "#010a26";
+                ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+
+                ctx.globalCompositeOperation = "lighter";
+
+                ribbons.forEach((rib, i) => {
+                    const angle = rib.rot + (time * rib.dir * rib.spd) + Math.sin(time * 1.8 + i) * 0.2;
+                    const width = R * rib.rx * (1 + Math.sin(time * 2.2 + i * 2) * 0.2);
+                    const height = R * rib.ry * (1 + Math.cos(time * 1.9 + i) * 0.25);
+
+                    const px = cx + (R * rib.ox) + Math.sin(time * 1.8 + i) * R * 0.18 + Math.cos(time * 2.7 + i) * R * 0.08;
+                    const py = cy + (R * rib.oy) + Math.cos(time * 1.6 + i) * R * 0.18 + Math.sin(time * 2.4 + i) * R * 0.08;
+
+                    ctx.beginPath();
+                    ctx.ellipse(px, py, width, height, angle, 0, Math.PI * 2);
+
+                    const grad = ctx.createRadialGradient(px, py, 0, px, py, width);
+                    grad.addColorStop(0, `rgba(${rib.r}, ${rib.g}, ${rib.b}, ${rib.alpha})`);
+                    grad.addColorStop(1, `rgba(${rib.r}, ${rib.g}, ${rib.b}, 0.01)`);
+
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                });
+
+                const coreX = cx + Math.sin(time * 1.2) * R * 0.15 + Math.cos(time * 2.6) * R * 0.05;
+                const coreY = cy + Math.cos(time * 1.4) * R * 0.15 + Math.sin(time * 2.2) * R * 0.05;
+
+                const core = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, R * 0.5);
+                core.addColorStop(0, "rgba(255, 255, 255, 0.55)");
+                core.addColorStop(0.2, "rgba(255, 255, 255, 0.25)");
+                core.addColorStop(0.5, "rgba(255, 255, 255, 0.05)");
+                core.addColorStop(0.5, "rgba(255, 255, 255, 0.1)");
+                core.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+                ctx.fillStyle = core;
+                ctx.beginPath();
+                ctx.arc(coreX, coreY, R * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                const flareAngle = time * -0.6;
+                const flareWidth = R * 0.85 * (1 + Math.sin(time * 3) * 0.1);
+
+                ctx.beginPath();
+                ctx.ellipse(coreX, coreY, flareWidth, R * 0.015, flareAngle, 0, Math.PI * 2);
+                const flare = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, flareWidth);
+                flare.addColorStop(0, "rgba(255, 255, 255, 0.35)");
+                flare.addColorStop(1, "rgba(255, 255, 255, 0)");
+                ctx.fillStyle = flare;
+                ctx.fill();
+
+                ctx.restore();
+
+                ctx.globalCompositeOperation = "source-over";
+                ctx.beginPath();
+                ctx.arc(cx, cy, R, 0, Math.PI * 2);
+
+                const glass = ctx.createRadialGradient(cx, cy, R * 0.75, cx, cy, R);
+                glass.addColorStop(0, "rgba(255, 255, 255, 0)");
+                glass.addColorStop(0.85, "rgba(255, 255, 255, 0.08)");
+                glass.addColorStop(0.95, "rgba(255, 255, 255, 0.25)");
+                glass.addColorStop(1, "rgba(255, 255, 255, 0.4)");
+                ctx.fillStyle = glass;
+                ctx.fill();
+
+                const activeRatio = 0.2 + 0.8 * auraIntensity;
+                const edgeGlow = (0.45 + Math.sin(time * 1.5) * 0.12) * activeRatio;
+
+                ctx.shadowBlur = 15 * activeRatio;
+                ctx.shadowColor = `rgba(255,255,255,${0.7 * activeRatio})`;
+                ctx.lineWidth = 0.8;
+                ctx.strokeStyle = `rgba(255,255,255,${edgeGlow})`;
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+            }
+
+            requestAnimationFrame(draw);
+        })();
+    </script>
+</body>
+
+</html>
