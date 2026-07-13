@@ -528,11 +528,11 @@
             }
 
             #intro-bubble {
-                right: 82px;
+                right: 80px;
                 padding: 10px 10px 10px 10px;
                 bottom: 2px;
                 min-width: 0;
-                max-width: calc(100vw - 120px);
+                max-width: calc(100vw - 114px);
             }
 
             .robot-icon {
@@ -540,8 +540,8 @@
             }
 
             .robot-icon svg {
-                width: 32px;
-                height: 32px;
+                width: 34px;
+                height: 34px;
             }
 
             .custom-icon {
@@ -550,11 +550,12 @@
             }
 
             #intro-text {
-                padding-right: 12px;
+                padding-right: 10px;
             }
 
             .text-bottom {
-                font-size: 12px;
+                font-size: 13px;
+                font-weight: 500;
                 word-break: break-word;
             }
 
@@ -713,22 +714,13 @@
 
             let audioLevel = 0;
 
-            navigator.mediaDevices?.getUserMedia({ audio: true }).then(stream => {
-                const ac = new AudioContext();
-                const src = ac.createMediaStreamSource(stream);
-                const an = ac.createAnalyser();
-                an.fftSize = 256;
-                src.connect(an);
-                const data = new Uint8Array(an.frequencyBinCount);
-
-                function updateAudio() {
-                    an.getByteFrequencyData(data);
-                    const sum = data.reduce((acc, val) => acc + val, 0);
-                    audioLevel += ((sum / data.length / 255) - audioLevel) * 0.2;
-                    requestAnimationFrame(updateAudio);
-                }
-                updateAudio();
-            }).catch(() => { });
+            // Microphone request removed to prevent popup
+            function simulateAudio() {
+                const targetLevel = Math.random() * 0.3;
+                audioLevel += (targetLevel - audioLevel) * 0.2;
+                requestAnimationFrame(simulateAudio);
+            }
+            simulateAudio();
 
             const ribbons = [
                 { r: 255, g: 30, b: 100, rx: 0.75, ry: 0.28, ox: -0.05, oy: 0.2, rot: 0.15, spd: 0.7, dir: 1, alpha: 0.6 },
