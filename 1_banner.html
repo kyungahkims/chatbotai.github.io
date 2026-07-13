@@ -2,1134 +2,1276 @@
 <html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 챗봇</title>
-    <style>
-        :root {
-            --theme-cyan: #00E5FF;
-            --theme-purple: #7C4DFF;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-            min-height: 100vh;
-            background: transparent;
-        }
-
-        #bottom-dim-overlay {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 180px;
-            background-image: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent);
-            pointer-events: none;
-            z-index: 9990;
-            opacity: 0;
-            transition: opacity 1.5s ease;
-        }
-
-        #bottom-dim-overlay.show {
-            opacity: 1;
-        }
-
-        #fab-wrap {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 9999;
-            width: 86px;
-            height: 86px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #fab-wrap::before,
-        #fab-wrap::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 229, 255, 0.32) 0%, transparent 70%);
-            animation: pulse 2.5s ease-out infinite;
-            pointer-events: none;
-        }
-
-        #fab-wrap::after {
-            animation-delay: 1.25s;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-
-            100% {
-                transform: scale(1.9);
-                opacity: 0;
-            }
-        }
-
-        .close-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 20px;
-            height: 20px;
-            border-radius: 20px;
-            background-color: #0b0c10;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-            z-index: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
-                right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
-                opacity 0.3s ease,
-                width 0.4s ease,
-                transform 0.2s ease,
-                border-color 0.2s ease;
-        }
-
-        .close-button.show {
-            top: -25px;
-            right: -8px;
-            opacity: 1;
-            z-index: 10;
-        }
-
-        .close-button.expand {
-            width: 38px;
-        }
-
-        .close-button.show:hover {
-            border-color: rgba(0, 229, 255, 0.4);
-        }
-
-        .action-inner {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            position: relative;
-        }
-
-        .info-btn {
-            font-size: 12px;
-            font-weight: bold;
-            font-family: 'Times New Roman', serif;
-            background: #999;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            opacity: 0;
-            transform: translateX(10px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        .close-button.expand .info-btn {
-            opacity: 1;
-            transform: translateX(0);
-            transition-delay: 0.1s;
-        }
-
-        .x-btn::before {
-            content: '';
-            position: absolute;
-            left: -0.5px;
-            top: 5px;
-            bottom: 5px;
-            width: 1px;
-            background: rgba(255, 255, 255, 0.25);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .close-button.expand .x-btn::before {
-            opacity: 1;
-            transition-delay: 0.2s;
-        }
-
-        .x-btn svg {
-            position: absolute;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        .x-btn .close-icon {
-            opacity: 0;
-            transform: scale(0.5) rotate(-90deg);
-        }
-
-        .x-btn .chevron-icon {
-            opacity: 1;
-            transform: scale(1) rotate(0deg);
-        }
-
-        .close-button.expand .x-btn .close-icon {
-            opacity: 1;
-            transform: scale(1) rotate(0deg);
-        }
-
-        .close-button.expand .x-btn .chevron-icon {
-            opacity: 0;
-            transform: scale(0.5) rotate(90deg);
-        }
-
-        #fab {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 0.25px solid transparent;
-            outline: none;
-            padding: 0;
-            position: relative;
-            z-index: 1;
-            transition: transform 0.18s ease, box-shadow 0.3s ease;
-            overflow: visible;
-            box-sizing: border-box;
-            background: linear-gradient(90deg, rgba(0, 229, 255, 0.6), rgba(255, 51, 204, 0.6)) border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        #fab:active {
-            transform: scale(0.93);
-        }
-
-        #bot-canvas {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            display: block;
-            border-radius: 50%;
-            z-index: 2;
-            animation: canvas-spin 5s linear infinite;
-        }
-
-        @keyframes canvas-spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        #intro-bubble {
-            position: absolute;
-            right: 95px;
-            bottom: 0px;
-            display: flex;
-            align-items: center;
-            width: max-content;
-            min-width: 260px;
-            max-width: 330px;
-            min-height: 66px;
-            padding: 10px 16px 10px 14px;
-            box-sizing: border-box;
-            border-radius: 40px;
-            background: linear-gradient(#1A1A24, #1A1A24) padding-box,
-                conic-gradient(from var(--bd-angle), #00d2ff, #6c22f5, #ff33cc, #00d2ff) border-box;
-            border: 1.5px solid transparent;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(108, 34, 245, 0.15);
-            animation: bubble-border-spin 4s linear infinite;
-            opacity: 0;
-            transform: translateY(15px);
-            transition: opacity 0.5s ease, transform 0.5s ease, filter 0.3s ease;
-            cursor: pointer;
-            z-index: 9;
-        }
-
-        /* 1e: 회전하는 그라데이션 테두리 링 */
-        @property --bd-angle {
-            syntax: '<angle>';
-            initial-value: 0deg;
-            inherits: false;
-        }
-
-        @keyframes bubble-border-spin {
-            to {
-                --bd-angle: 360deg;
-            }
-        }
-
-        #intro-bubble.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        #intro-bubble:hover {
-            filter: brightness(1.1);
-        }
-
-        #intro-bubble:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        .robot-icon {
-            flex-shrink: 0;
-            margin-right: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .robot-icon svg {
-            width: 36px;
-            height: 36px;
-        }
-
-        @keyframes iconSlideOut {
-            0% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateX(-15px);
-                opacity: 0;
-            }
-        }
-
-        @keyframes iconSlideIn {
-            0% {
-                transform: translateX(-15px);
-                opacity: 0;
-            }
-
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .robot-icon.slide-out {
-            animation: iconSlideOut 0.3s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
-        }
-
-        .robot-icon.slide-in {
-            animation: iconSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        #intro-text {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            line-height: 1.4;
-            letter-spacing: -0.4px;
-            overflow: visible;
-            padding-right: 12px;
-            position: relative;
-        }
-
-        .text-top {
-            display: inline-flex;
-            align-items: center;
-            color: #00E5FF;
-            font-size: 11px;
-            font-weight: 500;
-            white-space: nowrap;
-            margin-bottom: 6px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            border: 1px solid rgba(0, 229, 255, 0.5);
-            background: rgba(0, 229, 255, 0.08);
-            align-self: flex-start;
-        }
-
-        .text-bottom {
-            position: relative;
-            color: #FFFFFF;
-            font-size: 14px;
-            font-weight: 900;
-            display: inline-block;
-            white-space: normal;
-            word-break: keep-all;
-        }
-
-        .text-bottom b {
-            font-weight: 900;
-        }
-
-        .intro-text .text-bottom {
-            display: inline-block;
-        }
-
-        .highlight-bubble {
-            color: #FFFFFF;
-            font-weight: 900;
-        }
-
-        .cursor-bar {
-            position: absolute;
-            bottom: 2px;
-            display: inline-block;
-            width: 1.5px;
-            height: 16px;
-            background-color: var(--theme-cyan);
-            margin-left: 5px;
-            border-radius: 2px;
-            box-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
-        }
-
-        .is-blinking .cursor-bar {
-            animation: caret-blink 0.9s step-end infinite;
-        }
-
-        @keyframes caret-blink {
-
-            from,
-            to {
-                opacity: 0;
-            }
-
-            50% {
-                opacity: 1;
-            }
-        }
-
-        .arrow-btn {
-            position: relative;
-            background: #1A1A24;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            margin-left: auto;
-            transition: all 0.3s ease;
-        }
-
-        .arrow-btn svg {
-            width: 18px;
-            height: 18px;
-        }
-
-        #intro-bubble:hover .arrow-btn {
-            background: rgba(0, 229, 255, 0.1);
-            border-color: var(--theme-cyan);
-            transform: translateX(3px);
-        }
-
-        /* 2e: 화살표 버튼 스파클 버스트 */
-        .cta-spark {
-            position: absolute;
-            pointer-events: none;
-            line-height: 1;
-            z-index: -1;
-            animation: cta-float 1.8s ease-out infinite;
-        }
-
-        .cta-spark.s1 {
-            top: -3px;
-            left: 7px;
-            font-size: 9px;
-            color: #67e8f9;
-            animation-delay: 0s;
-        }
-
-        .cta-spark.s2 {
-            top: 0px;
-            right: 2px;
-            font-size: 7px;
-            color: #c084fc;
-            animation-delay: .5s;
-        }
-
-        .cta-spark.s3 {
-            top: 3px;
-            left: -3px;
-            font-size: 6px;
-            color: #ffffff;
-            animation-delay: 1s;
-        }
-
-        @keyframes cta-float {
-            0% {
-                transform: translateY(4px) scale(.5);
-                opacity: 0;
-            }
-
-            35% {
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateY(-30px) scale(1);
-                opacity: 0;
-            }
-        }
-
-        .loading-dots {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 5px;
-            height: 100%;
-            padding-left: 4px;
-        }
-
-        .loading-dots span {
-            width: 6px;
-            height: 6px;
-            background-color: var(--theme-cyan);
-            border-radius: 50%;
-            animation: dot-wave 1.2s infinite ease-in-out both;
-        }
-
-        .loading-dots span:nth-child(1) {
-            animation-delay: -0.32s;
-        }
-
-        .loading-dots span:nth-child(2) {
-            animation-delay: -0.16s;
-        }
-
-        @keyframes dot-wave {
-
-            0%,
-            80%,
-            100% {
-                transform: translateY(0);
-                opacity: 0.4;
-            }
-
-            40% {
-                transform: translateY(-8px);
-                opacity: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            #fab-wrap {
-                width: 76px;
-                height: 76px;
-                bottom: 20px;
-                right: 20px;
-            }
-
-            #intro-bubble {
-                right: 80px;
-                padding: 10px 10px 10px 10px;
-                bottom: 2px;
-                min-width: 0;
-                max-width: calc(100vw - 114px);
-            }
-
-            .robot-icon {
-                margin-right: 8px;
-            }
-
-            .robot-icon svg {
-                width: 34px;
-                height: 34px;
-            }
-
-            .custom-icon {
-                width: 48px !important;
-                height: 48px !important;
-            }
-
-            #intro-text {
-                padding-right: 10px;
-            }
-
-            .text-bottom {
-                font-size: 13px;
-                font-weight: 500;
-                word-break: break-word;
-            }
-
-            .arrow-btn {
-                width: 30px;
-                height: 30px;
-            }
-
-            .arrow-btn svg {
-                width: 18px;
-                height: 18px;
-            }
-        }
-
-
-
-        .policy-bubble {
-            position: absolute;
-            right: 40px;
-            top: -54px;
-            width: max-content;
-            padding: 8px 12px;
-            background: rgba(26, 26, 36, 0.95);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(-10px);
-            transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
-            z-index: 11;
-            font-size: 11px;
-            color: #ddd;
-            line-height: 1.4;
-            letter-spacing: -0.3px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-
-        .policy-bubble:hover {
-            background: rgba(36, 36, 46, 0.95);
-            border-color: rgba(0, 229, 255, 0.6);
-        }
-
-        .policy-bubble.show {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateX(0);
-        }
-
-        .bulb-glow {
-            opacity: 0.3;
-        }
-
-        .bulb-ray {
-            opacity: 1;
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>AI 챗봇</title>
+	<style>
+		:root {
+			--theme-cyan: #00E5FF;
+			--theme-purple: #7C4DFF;
+		}
+
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+			min-height: 100vh;
+			background: transparent;
+		}
+
+		#bottom-dim-overlay {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 180px;
+			background-image: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent);
+			pointer-events: none;
+			z-index: 9990;
+			opacity: 0;
+			transition: opacity 1.5s ease;
+		}
+
+		#bottom-dim-overlay.show {
+			opacity: 1;
+		}
+
+		#fab-wrap {
+			position: fixed;
+			bottom: 30px;
+			right: 30px;
+			z-index: 9999;
+			width: 86px;
+			height: 86px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#fab-wrap::before,
+		#fab-wrap::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			border-radius: 50%;
+			background: radial-gradient(circle, rgba(0, 229, 255, 0.32) 0%, transparent 70%);
+			animation: pulse 2.5s ease-out infinite;
+			pointer-events: none;
+		}
+
+		#fab-wrap::after {
+			animation-delay: 1.25s;
+		}
+
+		@keyframes pulse {
+			0% {
+				transform: scale(1);
+				opacity: 0.8;
+			}
+
+			100% {
+				transform: scale(1.9);
+				opacity: 0;
+			}
+		}
+
+		.close-button {
+			position: absolute;
+			top: 20px;
+			right: 20px;
+			width: 20px;
+			height: 20px;
+			border-radius: 20px;
+			background-color: #0b0c10;
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			cursor: pointer;
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+			z-index: 0;
+			opacity: 0;
+			overflow: hidden;
+			transition: top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+				right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+				opacity 0.3s ease,
+				width 0.4s ease,
+				transform 0.2s ease,
+				border-color 0.2s ease;
+		}
+
+		.close-button.show {
+			top: -25px;
+			right: -8px;
+			opacity: 1;
+			z-index: 10;
+		}
+
+		.close-button.expand {
+			width: 38px;
+		}
+
+		.close-button.show:hover {
+			border-color: rgba(0, 229, 255, 0.4);
+		}
+
+		.action-inner {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 18px;
+			height: 18px;
+			flex-shrink: 0;
+			position: relative;
+		}
+
+		.info-btn {
+			font-size: 12px;
+			font-weight: bold;
+			font-family: 'Times New Roman', serif;
+			background: #999;
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			opacity: 0;
+			transform: translateX(10px);
+			transition: opacity 0.3s ease, transform 0.3s ease;
+		}
+
+		.close-button.expand .info-btn {
+			opacity: 1;
+			transform: translateX(0);
+			transition-delay: 0.1s;
+		}
+
+		.x-btn::before {
+			content: '';
+			position: absolute;
+			left: -0.5px;
+			top: 5px;
+			bottom: 5px;
+			width: 1px;
+			background: rgba(255, 255, 255, 0.25);
+			opacity: 0;
+			transition: opacity 0.3s ease;
+		}
+
+		.close-button.expand .x-btn::before {
+			opacity: 1;
+			transition-delay: 0.2s;
+		}
+
+		.x-btn svg {
+			position: absolute;
+			transition: opacity 0.3s ease, transform 0.3s ease;
+		}
+
+		.x-btn .close-icon {
+			opacity: 0;
+			transform: scale(0.5) rotate(-90deg);
+		}
+
+		.x-btn .chevron-icon {
+			opacity: 1;
+			transform: scale(1) rotate(0deg);
+		}
+
+		.close-button.expand .x-btn .close-icon {
+			opacity: 1;
+			transform: scale(1) rotate(0deg);
+		}
+
+		.close-button.expand .x-btn .chevron-icon {
+			opacity: 0;
+			transform: scale(0.5) rotate(90deg);
+		}
+
+		#fab {
+			width: 100%;
+			height: 100%;
+			border-radius: 50%;
+			cursor: pointer;
+			border: 0.25px solid transparent;
+			outline: none;
+			padding: 0;
+			position: relative;
+			z-index: 1;
+			transition: transform 0.18s ease, box-shadow 0.3s ease;
+			overflow: visible;
+			box-sizing: border-box;
+			background: linear-gradient(90deg, rgba(0, 229, 255, 0.6), rgba(255, 51, 204, 0.6)) border-box;
+			-webkit-tap-highlight-color: transparent;
+		}
+
+		#fab:active {
+			transform: scale(0.93);
+		}
+
+		#bot-canvas {
+			width: 100%;
+			height: 100%;
+			position: relative;
+			display: block;
+			border-radius: 50%;
+			z-index: 2;
+			animation: canvas-spin 5s linear infinite;
+		}
+
+		@keyframes canvas-spin {
+			0% {
+				transform: rotate(0deg);
+			}
+
+			100% {
+				transform: rotate(360deg);
+			}
+		}
+
+		#intro-bubble {
+			position: absolute;
+			right: 95px;
+			bottom: 0px;
+			display: flex;
+			align-items: center;
+			width: max-content;
+			min-width: 260px;
+			max-width: 330px;
+			min-height: 66px;
+			padding: 10px 16px 10px 14px;
+			box-sizing: border-box;
+			border-radius: 40px;
+			background: linear-gradient(#1A1A24, #1A1A24) padding-box,
+				conic-gradient(from var(--bd-angle), #00d2ff, #6c22f5, #ff33cc, #00d2ff) border-box;
+			border: 1.5px solid transparent;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(108, 34, 245, 0.15);
+			animation: bubble-border-spin 4s linear infinite;
+			opacity: 0;
+			transform: translateY(15px);
+			transition: opacity 0.5s ease, transform 0.5s ease, filter 0.3s ease;
+			cursor: pointer;
+			z-index: 9;
+		}
+
+		/* 1e: 회전하는 그라데이션 테두리 링 */
+		@property --bd-angle {
+			syntax: '<angle>';
+			initial-value: 0deg;
+			inherits: false;
+		}
+
+		@keyframes bubble-border-spin {
+			to {
+				--bd-angle: 360deg;
+			}
+		}
+
+		#intro-bubble.show {
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		#intro-bubble:hover {
+			filter: brightness(1.1);
+		}
+
+		#intro-bubble:active {
+			transform: translateY(0) scale(0.98);
+		}
+
+		.robot-icon {
+			flex-shrink: 0;
+			margin-right: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.robot-icon svg {
+			width: 36px;
+			height: 36px;
+		}
+
+		@keyframes iconSlideOut {
+			0% {
+				transform: translateX(0);
+				opacity: 1;
+			}
+
+			100% {
+				transform: translateX(-15px);
+				opacity: 0;
+			}
+		}
+
+		@keyframes iconSlideIn {
+			0% {
+				transform: translateX(-15px);
+				opacity: 0;
+			}
+
+			100% {
+				transform: translateX(0);
+				opacity: 1;
+			}
+		}
+
+		.robot-icon.slide-out {
+			animation: iconSlideOut 0.3s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+		}
+
+		.robot-icon.slide-in {
+			animation: iconSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+		}
+
+		#intro-text {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			line-height: 1.4;
+			letter-spacing: -0.4px;
+			overflow: visible;
+			padding-right: 12px;
+			position: relative;
+		}
+
+		.text-top {
+			display: inline-flex;
+			align-items: center;
+			color: #00E5FF;
+			font-size: 11px;
+			font-weight: 500;
+			white-space: nowrap;
+			margin-bottom: 6px;
+			padding: 3px 10px;
+			border-radius: 20px;
+			border: 1px solid rgba(0, 229, 255, 0.5);
+			background: rgba(0, 229, 255, 0.08);
+			align-self: flex-start;
+		}
+
+		.text-bottom {
+			position: relative;
+			color: #FFFFFF;
+			font-size: 14px;
+			font-weight: 900;
+			display: inline-block;
+			white-space: normal;
+			word-break: keep-all;
+		}
+
+		.text-bottom b {
+			font-weight: 900;
+		}
+
+		.intro-text .text-bottom {
+			display: inline-block;
+		}
+
+		.highlight-bubble {
+			color: #FFFFFF;
+			font-weight: 900;
+		}
+
+		.cursor-bar {
+			position: absolute;
+			bottom: 2px;
+			display: inline-block;
+			width: 1.5px;
+			height: 16px;
+			background-color: var(--theme-cyan);
+			margin-left: 5px;
+			border-radius: 2px;
+			box-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
+		}
+
+		.is-blinking .cursor-bar {
+			animation: caret-blink 0.9s step-end infinite;
+		}
+
+		@keyframes caret-blink {
+
+			from,
+			to {
+				opacity: 0;
+			}
+
+			50% {
+				opacity: 1;
+			}
+		}
+
+		.arrow-btn {
+			position: relative;
+			background: #1A1A24;
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			border: 1px solid rgba(0, 229, 255, 0.3);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+			margin-left: auto;
+			transition: all 0.3s ease;
+		}
+
+		.arrow-btn svg {
+			width: 18px;
+			height: 18px;
+		}
+
+		#intro-bubble:hover .arrow-btn {
+			background: rgba(0, 229, 255, 0.1);
+			border-color: var(--theme-cyan);
+			transform: translateX(3px);
+		}
+
+		/* 2e: 화살표 버튼 스파클 버스트 */
+		.cta-spark {
+			position: absolute;
+			pointer-events: none;
+			line-height: 1;
+			z-index: -1;
+			animation: cta-float 1.8s ease-out infinite;
+		}
+
+		.cta-spark.s1 {
+			top: -3px;
+			left: 7px;
+			font-size: 9px;
+			color: #67e8f9;
+			animation-delay: 0s;
+		}
+
+		.cta-spark.s2 {
+			top: 0px;
+			right: 2px;
+			font-size: 7px;
+			color: #c084fc;
+			animation-delay: .5s;
+		}
+
+		.cta-spark.s3 {
+			top: 3px;
+			left: -3px;
+			font-size: 6px;
+			color: #ffffff;
+			animation-delay: 1s;
+		}
+
+		@keyframes cta-float {
+			0% {
+				transform: translateY(4px) scale(.5);
+				opacity: 0;
+			}
+
+			35% {
+				opacity: 1;
+			}
+
+			100% {
+				transform: translateY(-30px) scale(1);
+				opacity: 0;
+			}
+		}
+
+		.loading-dots {
+			display: flex;
+			align-items: center;
+			justify-content: flex-start;
+			gap: 5px;
+			height: 100%;
+			padding-left: 4px;
+		}
+
+		.loading-dots span {
+			width: 6px;
+			height: 6px;
+			background-color: var(--theme-cyan);
+			border-radius: 50%;
+			animation: dot-wave 1.2s infinite ease-in-out both;
+		}
+
+		.loading-dots span:nth-child(1) {
+			animation-delay: -0.32s;
+		}
+
+		.loading-dots span:nth-child(2) {
+			animation-delay: -0.16s;
+		}
+
+		@keyframes dot-wave {
+
+			0%,
+			80%,
+			100% {
+				transform: translateY(0);
+				opacity: 0.4;
+			}
+
+			40% {
+				transform: translateY(-8px);
+				opacity: 1;
+			}
+		}
+
+		@media (max-width: 768px) {
+			#fab-wrap {
+				width: 76px;
+				height: 76px;
+				bottom: 20px;
+				right: 20px;
+			}
+
+			#intro-bubble {
+				right: 80px;
+				padding: 10px 10px 10px 10px;
+				bottom: 2px;
+				min-width: 0;
+				max-width: calc(100vw - 114px);
+			}
+
+			.robot-icon {
+				margin-right: 8px;
+			}
+
+			.robot-icon svg {
+				width: 34px;
+				height: 34px;
+			}
+
+			.custom-icon {
+				width: 48px !important;
+				height: 48px !important;
+			}
+
+			#intro-text {
+				padding-right: 10px;
+			}
+
+			.text-bottom {
+				font-size: 13px;
+				font-weight: 500;
+				word-break: break-word;
+			}
+
+			.text-bottom b {
+				font-weight: 700;
+			}
+
+			.arrow-btn {
+				width: 30px;
+				height: 30px;
+			}
+
+			.arrow-btn svg {
+				width: 18px;
+				height: 18px;
+			}
+		}
+
+
+
+		.policy-bubble {
+			position: absolute;
+			right: 40px;
+			top: -54px;
+			width: max-content;
+			padding: 8px 12px;
+			background: rgba(26, 26, 36, 0.95);
+			border: 1px solid rgba(0, 229, 255, 0.3);
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+			opacity: 0;
+			pointer-events: none;
+			transform: translateX(-10px);
+			transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+			z-index: 11;
+			font-size: 11px;
+			color: #ddd;
+			line-height: 1.4;
+			letter-spacing: -0.3px;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			cursor: pointer;
+		}
+
+		.policy-bubble:hover {
+			background: rgba(36, 36, 46, 0.95);
+			border-color: rgba(0, 229, 255, 0.6);
+		}
+
+		.policy-bubble.show {
+			opacity: 1;
+			pointer-events: auto;
+			transform: translateX(0);
+		}
+
+		.bulb-glow {
+			opacity: 0.3;
+		}
+
+		.bulb-ray {
+			opacity: 1;
+		}
+	</style>
 </head>
 
 <body>
-    <div id="bottom-dim-overlay"></div>
-
-    <div id="fab-wrap">
-        <div class="close-button" aria-label="챗봇 메뉴">
-            <div class="action-inner info-btn">i</div>
-            <div class="action-inner x-btn" aria-label="챗봇 닫기">
-                <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff"
-                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9l6 6 6-6" />
-                </svg>
-                <svg class="close-icon" width="8" height="8" viewBox="0 0 12 12" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L11 11" stroke="#fff" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                    <path d="M11 1L1 11" stroke="#fff" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
-            </div>
-        </div>
-
-        <div class="policy-bubble"
-            onclick="window.open('https://www.mediacategory.com/mediaCategory/ad/mobon_user_branch1.html', '_blank')">
-            <div>
-                이 광고는 AI 기반의 맞춤 광고입니다.<br>사용자 관심사 기반으로 제공됩니다.
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 18l6-6-6-6" />
-            </svg>
-        </div>
-
-        <div id="intro-bubble" data-link="">
-            <div class="robot-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="8" width="18" height="11" rx="4" stroke="url(#bot-grad)" stroke-width="2" />
-                    <path d="M12 8V4" stroke="url(#bot-grad)" stroke-width="2" stroke-linecap="round" />
-                    <circle cx="12" cy="4" r="1.5" fill="#00E5FF" />
-                    <circle cx="8.5" cy="13.5" r="1.5" fill="#00E5FF" />
-                    <circle cx="15.5" cy="13.5" r="1.5" fill="#00E5FF" />
-                    <path d="M3 13.5H1" stroke="url(#bot-grad)" stroke-width="2" stroke-linecap="round" />
-                    <path d="M23 13.5H21" stroke="url(#bot-grad)" stroke-width="2" stroke-linecap="round" />
-                    <defs>
-                        <linearGradient id="bot-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#7C4DFF" />
-                            <stop offset="1" stop-color="#00E5FF" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-            </div>
-
-            <div id="intro-text"></div>
-
-            <div class="arrow-btn">
-                <span class="cta-spark s1">✦</span>
-                <span class="cta-spark s2">✦</span>
-                <span class="cta-spark s3">✦</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                </svg>
-            </div>
-        </div>
-
-        <button id="fab" aria-label="AI 챗봇 캐릭터">
-            <canvas id="bot-canvas"></canvas>
-        </button>
-    </div>
-
-    <script>
-        /* AI 시리 챗봇 애니메이션 및 로직 */
-        (function () {
-            const c = document.getElementById('bot-canvas');
-            const ctx = c.getContext('2d');
-            let w, h, cx, cy, baseR;
-
-            function resize() {
-                const dpr = window.devicePixelRatio || 1;
-                const rect = c.parentElement.getBoundingClientRect();
-                w = rect.width;
-                h = rect.height;
-                c.width = w * dpr;
-                c.height = h * dpr;
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.scale(dpr, dpr);
-                cx = w / 2;
-                cy = h / 2;
-                baseR = Math.min(w, h) * 0.48;
-            }
-
-            window.addEventListener('resize', resize);
-            resize();
-
-            let audioLevel = 0;
-
-            // Microphone request removed to prevent popup
-            function simulateAudio() {
-                const targetLevel = Math.random() * 0.3;
-                audioLevel += (targetLevel - audioLevel) * 0.2;
-                requestAnimationFrame(simulateAudio);
-            }
-            simulateAudio();
-
-            const ribbons = [
-                { r: 255, g: 30, b: 100, rx: 0.75, ry: 0.28, ox: -0.05, oy: 0.2, rot: 0.15, spd: 0.7, dir: 1, alpha: 0.6 },
-                { r: 40, g: 255, b: 150, rx: 0.75, ry: 0.28, ox: 0.05, oy: -0.2, rot: -0.15, spd: 0.6, dir: -1, alpha: 0.5 },
-                { r: 0, g: 220, b: 255, rx: 0.8, ry: 0.3, ox: 0.1, oy: 0.0, rot: -0.3, spd: 0.9, dir: 1, alpha: 0.4 },
-                { r: 120, g: 30, b: 255, rx: 0.85, ry: 0.4, ox: -0.1, oy: 0.15, rot: 0.25, spd: 0.8, dir: -1, alpha: 0.5 },
-                { r: 255, g: 255, b: 255, rx: 0.7, ry: 0.2, ox: 0.0, oy: 0.0, rot: 0.0, spd: 1.0, dir: 1, alpha: 0.32 },
-                { r: 0, g: 120, b: 255, rx: 0.9, ry: 0.6, ox: 0.0, oy: -0.1, rot: 0.35, spd: 0.7, dir: -1, alpha: 0.4 },
-                { r: 255, g: 80, b: 180, rx: 0.75, ry: 0.25, ox: 0.15, oy: -0.1, rot: 0.5, spd: 1.2, dir: 1, alpha: 0.55 },
-                { r: 0, g: 255, b: 220, rx: 0.65, ry: 0.18, ox: -0.12, oy: 0.08, rot: -0.6, spd: 1.4, dir: -1, alpha: 0.5 },
-                { r: 120, g: 30, b: 255, rx: 0.85, ry: 0.4, ox: -0.1, oy: 0.15, rot: 0.25, spd: 0.8, dir: -1, alpha: 0.5 },
-                { r: 40, g: 255, b: 150, rx: 0.75, ry: 0.28, ox: 0.05, oy: -0.2, rot: -0.15, spd: 0.6, dir: -1, alpha: 0.5 },
-                { r: 0, g: 220, b: 255, rx: 0.8, ry: 0.3, ox: 0.1, oy: 0.0, rot: -0.3, spd: 0.9, dir: 1, alpha: 0.4 }
-            ];
-
-            let lastT = 0;
-            let effectiveTime = 0;
-            let auraIntensity = 0;
-            let startTime = 0;
-            window.botState = { isThinking: false };
-
-            function draw(t) {
-                requestAnimationFrame(draw);
-                if (startTime === 0) startTime = t;
-                let dt = t - lastT;
-                if (lastT === 0) dt = 16;
-                lastT = t;
-
-                if (window.botState.isThinking) {
-                    auraIntensity += (1 - auraIntensity) * 0.08;
-                } else {
-                    auraIntensity += (0 - auraIntensity) * 0.08;
-                }
-
-                let burst = 0;
-                let elapsed = t - startTime;
-                if (elapsed < 200) {
-                    burst = (1 - (elapsed / 200)) * 20;
-                }
-
-                let speedMult = 1 + ((3.5 + Math.sin(t * 0.006) * 2.5) - 1) * auraIntensity + burst;
-
-                if (auraIntensity > 0.01) {
-                    let pulse = Math.sin(t * 0.008) * 0.5 + 0.5;
-                    let ringAngle = (t * 0.1) % 360;
-                    let spread = 25 + pulse * 60;
-                    let wAlpha = 1.0 * auraIntensity;
-                    let c1Alpha = 1.0 * auraIntensity;
-                    let pAlpha = 0.9 * auraIntensity;
-                    let c2Alpha = 0.7 * auraIntensity;
-                    let baseAlpha = Math.max(0, 1 - auraIntensity);
-
-                    document.getElementById('fab').style.background =
-                        'conic-gradient(from ' + ringAngle + 'deg, rgba(255, 255, 255, ' + (1.0 * auraIntensity) + ') 0%, rgba(220, 250, 255, ' + (0.8 * auraIntensity) + ') 50%, rgba(255, 255, 255, ' + (1.0 * auraIntensity) + ') 100%) border-box, ' +
-                        'linear-gradient(90deg, rgba(0, 229, 255, ' + (0.6 * baseAlpha) + '), rgba(255, 51, 204, ' + (0.6 * baseAlpha) + ')) border-box';
-                    document.getElementById('fab').style.boxShadow =
-                        '0 0 ' + ((5 + pulse * 5) * auraIntensity) + 'px rgba(255, 255, 255, ' + wAlpha + '), ' +
-                        '0 0 ' + ((15 + pulse * 20) * auraIntensity) + 'px rgba(255, 255, 255, ' + wAlpha + '), ' +
-                        '0 0 ' + ((spread * 0.8) * auraIntensity) + 'px rgba(255, 255, 255, ' + (wAlpha * 0.9) + '), ' +
-                        '0 0 ' + (spread * auraIntensity) + 'px rgba(240, 255, 255, ' + c1Alpha + '), ' +
-                        '0 0 ' + ((spread * 1.5) * auraIntensity) + 'px rgba(150, 245, 255, ' + pAlpha + '), ' +
-                        '0 0 ' + ((spread * 2.5) * auraIntensity) + 'px rgba(0, 229, 255, ' + c2Alpha + '), ' +
-                        '0 0 15px rgba(0, 229, 255, ' + (0.5 * baseAlpha) + '), ' +
-                        '0 0 15px rgba(255, 51, 204, ' + (0.3 * baseAlpha) + '), ' +
-                        '0 0 30px rgba(0, 229, 255, ' + (0.3 * baseAlpha) + '), ' +
-                        'inset 0 0 15px rgba(0, 229, 255, ' + (0.1 * baseAlpha) + ')';
-                } else {
-                    if (document.getElementById('fab').style.background) {
-                        document.getElementById('fab').style.background = '';
-                        document.getElementById('fab').style.boxShadow = '';
-                    }
-                }
-
-                effectiveTime += dt * Math.max(0.1, speedMult);
-
-                ctx.clearRect(0, 0, w, h);
-
-                const R = baseR * (1 + audioLevel * 0.15);
-                const time = effectiveTime * 0.0008;
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(cx, cy, R, 0, Math.PI * 2);
-                ctx.clip();
-
-                // 더 깊은 진한 남색 배경
-                ctx.fillStyle = "#010a26";
-                ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
-
-                ctx.globalCompositeOperation = "lighter";
-
-                ribbons.forEach((rib, i) => {
-                    // 복잡한 움직임을 위해 sin/cos 함수 추가
-                    const angle = rib.rot + (time * rib.dir * rib.spd) + Math.sin(time * 1.8 + i) * 0.2;
-                    const width = R * rib.rx * (1 + Math.sin(time * 2.2 + i * 2) * 0.2);
-                    const height = R * rib.ry * (1 + Math.cos(time * 1.9 + i) * 0.25);
-
-                    const px = cx + (R * rib.ox) + Math.sin(time * 1.8 + i) * R * 0.18 + Math.cos(time * 2.7 + i) * R * 0.08;
-                    const py = cy + (R * rib.oy) + Math.cos(time * 1.6 + i) * R * 0.18 + Math.sin(time * 2.4 + i) * R * 0.08;
-
-                    ctx.beginPath();
-                    // 타원을 물결 모양으로 보이게 하기 위해 두꺼운 선으로 그리기
-                    ctx.ellipse(px, py, width, height, angle, 0, Math.PI * 2);
-
-                    const grad = ctx.createRadialGradient(px, py, 0, px, py, width);
-                    grad.addColorStop(0, 'rgba(' + rib.r + ', ' + rib.g + ', ' + rib.b + ', ' + rib.alpha + ')');
-                    grad.addColorStop(1, 'rgba(' + rib.r + ', ' + rib.g + ', ' + rib.b + ', 0.01)');
-
-                    ctx.fillStyle = grad;
-                    ctx.fill();
-                });
-
-                // 코어 로직
-                const coreX = cx + Math.sin(time * 1.2) * R * 0.15 + Math.cos(time * 2.6) * R * 0.05;
-                const coreY = cy + Math.cos(time * 1.4) * R * 0.15 + Math.sin(time * 2.2) * R * 0.05;
-
-                const core = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, R * 0.5);
-                core.addColorStop(0, "rgba(255, 255, 255, 0.55)");
-                core.addColorStop(0.2, "rgba(255, 255, 255, 0.25)");
-                core.addColorStop(0.5, "rgba(255, 255, 255, 0.05)");
-                core.addColorStop(0.5, "rgba(255, 255, 255, 0.1)");
-                core.addColorStop(1, "rgba(255, 255, 255, 0)");
-
-                ctx.fillStyle = core;
-                ctx.beginPath();
-                ctx.arc(coreX, coreY, R * 0.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 플레어
-                const flareAngle = time * -0.6;
-                const flareWidth = R * 0.85 * (1 + Math.sin(time * 3) * 0.1);
-
-                ctx.beginPath();
-                ctx.ellipse(coreX, coreY, flareWidth, R * 0.015, flareAngle, 0, Math.PI * 2);
-                const flare = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, flareWidth);
-                flare.addColorStop(0, "rgba(255, 255, 255, 0.35)");
-                flare.addColorStop(1, "rgba(255, 255, 255, 0)");
-                ctx.fillStyle = flare;
-                ctx.fill();
-
-                ctx.restore();
-
-                ctx.globalCompositeOperation = "source-over";
-                ctx.beginPath();
-                ctx.arc(cx, cy, R, 0, Math.PI * 2);
-
-                // 섬세한 유리 가장자리 효과
-                const glass = ctx.createRadialGradient(cx, cy, R * 0.75, cx, cy, R);
-                glass.addColorStop(0, "rgba(255, 255, 255, 0)");
-                glass.addColorStop(0.85, "rgba(255, 255, 255, 0.08)");
-                glass.addColorStop(0.95, "rgba(255, 255, 255, 0.25)");
-                glass.addColorStop(1, "rgba(255, 255, 255, 0.4)");
-                ctx.fillStyle = glass;
-                ctx.fill();
-
-                const edgeGlow = 0.45 + Math.sin(time * 1.5) * 0.12;
-
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = "rgba(255,255,255,0.7)";
-                ctx.lineWidth = 0.8;
-                ctx.strokeStyle = 'rgba(255,255,255,' + edgeGlow + ')';
-                ctx.stroke();
-
-                ctx.shadowBlur = 0;
-            }
-
-            requestAnimationFrame(draw);
-        })();
-
-        /* 텍스트 타이핑 효과 및 버블 UI 로직 */
-        (function () {
-            const dimOverlay = document.getElementById('bottom-dim-overlay');
-            const introBubble = document.getElementById('intro-bubble');
-            const introText = document.getElementById('intro-text');
-            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-            const icon1 = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="8" width="18" height="11" rx="4" stroke="url(#sparkle-grad-1)" stroke-width="2" /><path d="M12 8V4" stroke="url(#sparkle-grad-1)" stroke-width="2" stroke-linecap="round" /><circle cx="12" cy="4" r="1.5" fill="url(#sparkle-grad-1)" /><circle cx="8.5" cy="13.5" r="1.5" fill="url(#sparkle-grad-1)" /><circle cx="15.5" cy="13.5" r="1.5" fill="url(#sparkle-grad-1)" /><path d="M3 13.5H1" stroke="url(#sparkle-grad-1)" stroke-width="2" stroke-linecap="round" /><path d="M23 13.5H21" stroke="url(#sparkle-grad-1)" stroke-width="2" stroke-linecap="round" /><defs><linearGradient id="sparkle-grad-1" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff" /><stop offset="1" stop-color="#6c22f5" /></linearGradient></defs></svg>';
-            const icon2 = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="2" width="14" height="20" rx="3" stroke="url(#sparkle-grad-2)" stroke-width="2"/><path d="M11 19H13" stroke="url(#sparkle-grad-2)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="11" r="3" stroke="url(#sparkle-grad-2)" stroke-width="2"/><defs><linearGradient id="sparkle-grad-2" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff" /><stop offset="1" stop-color="#6c22f5" /></linearGradient></defs></svg>';
-            const icon3 = '<svg viewBox="-1.5 -1.5 27 27" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="bulb-glow" d="M12 4C9.24 4 7 6.24 7 9c0 2.08 1.19 3.88 2.93 4.78L10 16h4l.07-2.22C15.81 12.88 17 11.08 17 9c0-2.76-2.24-5-5-5z" fill="url(#sparkle-grad-3)"/><path d="M12 4C9.24 4 7 6.24 7 9c0 2.08 1.19 3.88 2.93 4.78L10 16h4l.07-2.22C15.81 12.88 17 11.08 17 9c0-2.76-2.24-5-5-5z" stroke="url(#sparkle-grad-3)" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 16h4M10.5 18.5h3M11 21h2" stroke="url(#sparkle-grad-3)" stroke-width="1.7" stroke-linecap="round"/><line class="bulb-ray" x1="12" y1="2" x2="12" y2="0" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="16.8" y1="4.2" x2="18.2" y2="2.8" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="18.8" y1="9" x2="20.6" y2="9" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="7.2" y1="4.2" x2="5.8" y2="2.8" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="5.2" y1="9" x2="3.4" y2="9" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><defs><linearGradient id="sparkle-grad-3" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff"/><stop offset="1" stop-color="#6c22f5"/></linearGradient></defs></svg>';
-            const icon4 = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.5C17.2467 21.5 21.5 17.2467 21.5 12C21.5 6.75329 17.2467 2.5 12 2.5C6.75329 2.5 2.5 6.75329 2.5 12C2.5 17.2467 6.75329 21.5 12 21.5Z" stroke="url(#sparkle-grad-4)" stroke-width="2"/><circle cx="8" cy="10" r="1.5" fill="url(#sparkle-grad-4)"/><circle cx="12" cy="7" r="1.5" fill="url(#sparkle-grad-4)"/><circle cx="16" cy="10" r="1.5" fill="url(#sparkle-grad-4)"/><path d="M8 15C9.5 16.5 14.5 16.5 16 15" stroke="url(#sparkle-grad-4)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="sparkle-grad-4" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff" /><stop offset="1" stop-color="#6c22f5" /></linearGradient></defs></svg>';
-
-            var wp_json = ('{"client":[{"logo":1,"data":[{"logo":"evera-1124614761000.png","desc":"수술없이 자연스럽게 이브라","price":"","pnm":"이브샵","t0":"","desc_web":"가슴전문 쇼핑몰, 브레스트케어용품 판매","purl":"1_shop_with_popup.html","img":"//img.mobon.net/ad/efile/d542f917af29284d6e215529aad933e0_i250_250.jpg","pcode":"x","site_name":"이브샵","logo2":"evera-320936086000.png","site_desc1":"사이트설명","site_desc2":"사이트설명2","site_desc3":"사이트설명3","site_desc4":"사이트설명4","chatbotMent":"전 세계 사람들이 <b>가장 많이 쓰는 스마트폰</b>은?","cta_text":"바로가기"}],"length":1,"target":"UM","site_title":"스타일베리","oslink":""}]} ');
-            const parsedData = JSON.parse(wp_json);
-            const clientData = parsedData.client[0].data[0];
-
-            const messages = [
-                {
-
-                    text: "<canvas class='sparkle-canvas' width='42' height='42' style='vertical-align: middle; margin-top: -3px; margin-right: 1px; width: 14px; height: 12px;'></canvas> 이 상품과 어울리는 <b style='background: linear-gradient(90deg, #b077ff, #00d2ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'><br>제품을 코디</b>해 드릴까요?",
-                    link: clientData.purl,
-                    icon: '<div class="custom-icon" style="width: 56px; height: 56px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, #00d2ff, #6c22f5); box-sizing: border-box;"><img src="11.png" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #eee;"></div>'
-                }
-            ];
-
-            let msgIndex = 0;
-
-            async function typeText(msg) {
-                const htmlText = msg.text;
-                const topText = msg.topText || '';
-
-                window.botState.isThinking = true;
-                introText.className = 'is-loading';
-
-                let hiddenHTML = '';
-                if (topText) hiddenHTML += '<div class="text-top" style="visibility: hidden;">' + topText + '</div>';
-                hiddenHTML += '<div class="text-bottom" style="visibility: hidden;">' + htmlText + '</div>';
-
-                introText.innerHTML = hiddenHTML
-                    + '<div class="typing-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center;"><div class="loading-dots"><span></span><span></span><span></span></div></div>';
-
-                await sleep(1500);
-
-                setTimeout(() => {
-                    window.botState.isThinking = false;
-                }, 500);
-
-                introText.className = 'is-typing';
-                const typingContainer = introText.querySelector('.typing-container');
-
-                let htmlContent = '';
-                if (topText) htmlContent += '<div class="text-top">' + topText + '</div>';
-                htmlContent += '<div class="text-bottom">';
-
-                let currentHTML = '';
-                let i = 0;
-                while (i < htmlText.length) {
-                    if (htmlText[i] === '<') {
-                        let end = htmlText.indexOf('>', i);
-                        if (end !== -1) {
-                            currentHTML += htmlText.substring(i, end + 1);
-                            i = end + 1;
-                            continue;
-                        }
-                    }
-                    currentHTML += htmlText[i];
-                    typingContainer.innerHTML = htmlContent + currentHTML + '<span class="cursor-bar"></span></div>';
-                    await sleep(45);
-                    i++;
-                }
-
-                introText.className = 'is-blinking';
-            }
-
-            async function startSequence() {
-                const closeBtn = document.querySelector('.close-button');
-                if (closeBtn) {
-                    closeBtn.classList.add('show');
-                }
-
-                introBubble.classList.add('show');
-                dimOverlay.classList.add('show');
-
-                const msg = messages[0];
-                introBubble.dataset.link = msg.link;
-
-                const iconContainer = document.querySelector('.robot-icon');
-                if (iconContainer && msg.icon) {
-                    iconContainer.innerHTML = msg.icon;
-                    iconContainer.dataset.initialized = 'true';
-                }
-
-                await typeText(msg);
-            }
-
-            introBubble.addEventListener('click', () => {
-                const link = introBubble.dataset.link;
-                if (link) window.open(link, '_blank');
-            });
-
-            const closeWrapper = document.querySelector('.close-button');
-            if (closeWrapper) {
-                const infoBtn = closeWrapper.querySelector('.info-btn');
-                const xBtn = closeWrapper.querySelector('.x-btn');
-
-                if (infoBtn) {
-                    infoBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const policyBubble = document.querySelector('.policy-bubble');
-                        if (policyBubble) {
-                            policyBubble.classList.toggle('show');
-                        }
-                    });
-                }
-
-                // 외부 클릭 시 말풍선 닫기
-                document.addEventListener('click', (e) => {
-                    const policyBubble = document.querySelector('.policy-bubble');
-                    if (policyBubble && policyBubble.classList.contains('show') && !e.target.closest('.policy-bubble')) {
-                        policyBubble.classList.remove('show');
-                    }
-                });
-
-                if (xBtn) {
-                    xBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (closeWrapper.classList.contains('expand')) {
-                            document.getElementById('fab-wrap').style.display = 'none';
-                            const dimOverlay = document.getElementById('bottom-dim-overlay');
-                            if (dimOverlay) dimOverlay.classList.remove('show');
-                            if (window !== window.parent) {
-                                setTimeout(() => {
-                                    window.parent.postMessage('closeIframe', '*');
-                                }, 1500);
-                            }
-                        } else {
-                            closeWrapper.classList.add('expand');
-                        }
-                    });
-                }
-
-                closeWrapper.addEventListener('click', (e) => {
-                    if (!closeWrapper.classList.contains('expand')) {
-                        e.stopPropagation();
-                        closeWrapper.classList.add('expand');
-                    }
-                });
-            }
-
-            const fabWrap = document.getElementById('fab-wrap');
-            if (fabWrap) {
-                fabWrap.addEventListener('click', (e) => {
-                    if (e.target.closest('.close-button') || e.target.closest('#intro-bubble')) return;
-                    if (!introBubble.classList.contains('show')) {
-                        startSequence();
-                    }
-                });
-            }
-
-            if (window === window.parent) {
-                startSequence();
-            } else {
-                window.addEventListener('message', (event) => {
-                    if (event.data === 'showBubble') {
-                        if (!introBubble.classList.contains('show')) {
-                            startSequence();
-                        }
-                    } else if (event.data === 'closePolicyBubble') {
-                        const policyBubble = document.querySelector('.policy-bubble');
-                        if (policyBubble && policyBubble.classList.contains('show')) {
-                            policyBubble.classList.remove('show');
-                        }
-                    }
-                });
-            }
-        })();
-
-        /* 반짝이는 캔버스 아이콘 로직 */
-        (function () {
-            let time = 0;
-            function drawSparkles() {
-                requestAnimationFrame(drawSparkles);
-                time += 0.05;
-                const canvases = document.querySelectorAll('.sparkle-canvas');
-                canvases.forEach(canvas => {
-                    if (!canvas.getContext) return;
-                    const ctx = canvas.getContext('2d');
-                    const w = canvas.width;
-                    const h = canvas.height;
-                    ctx.clearRect(0, 0, w, h);
-
-                    ctx.save();
-                    ctx.translate(w / 2, h / 2);
-
-                    // Main star
-                    const scale1 = 0.6 + Math.sin(time) * 0.4;
-                    ctx.save();
-                    ctx.scale(scale1, scale1);
-                    ctx.rotate(time * 0.5);
-                    drawStar(ctx, w, h);
-                    ctx.fillStyle = '#00E5FF'; // 하늘색
-                    ctx.fill();
-                    ctx.restore();
-
-                    // Inner white glow
-                    ctx.save();
-                    ctx.scale(scale1 * 0.5, scale1 * 0.5);
-                    ctx.rotate(time * 0.5);
-                    drawStar(ctx, w, h);
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fill();
-                    ctx.restore();
-
-                    // Small secondary star
-                    const scale2 = 0.3 + Math.sin(time + 2) * 0.2;
-                    ctx.save();
-                    ctx.translate(w * 0.3, -h * 0.3);
-                    ctx.scale(scale2, scale2);
-                    ctx.rotate(-time * 0.8);
-                    drawStar(ctx, w, h);
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fill();
-                    ctx.restore();
-
-                    ctx.restore();
-                });
-            }
-
-            function drawStar(ctx, w, h) {
-                ctx.beginPath();
-                ctx.moveTo(0, -h / 2);
-                ctx.quadraticCurveTo(w / 12, -h / 12, w / 2, 0);
-                ctx.quadraticCurveTo(w / 12, h / 12, 0, h / 2);
-                ctx.quadraticCurveTo(-w / 12, h / 12, -w / 2, 0);
-                ctx.quadraticCurveTo(-w / 12, -h / 12, 0, -h / 2);
-            }
-
-            requestAnimationFrame(drawSparkles);
-        })();
-    </script>
+	<div id="bottom-dim-overlay"></div>
+
+	<div id="fab-wrap">
+		<div class="close-button" aria-label="챗봇 메뉴">
+			<div class="action-inner info-btn">i</div>
+			<div class="action-inner x-btn" aria-label="챗봇 닫기">
+				<svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"
+					stroke-linecap="round" stroke-linejoin="round">
+					<path d="M6 9l6 6 6-6" />
+				</svg>
+				<svg class="close-icon" width="8" height="8" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M1 1L11 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+					<path d="M11 1L1 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+			</div>
+		</div>
+
+		<div class="policy-bubble"
+			onclick="window.open('https://www.mediacategory.com/mediaCategory/ad/mobon_user_branch1.html', '_blank')">
+			<div>
+				이 광고는 AI 기반의 맞춤 광고입니다.<br>사용자 관심사 기반으로 제공됩니다.
+			</div>
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+				stroke-linecap="round" stroke-linejoin="round">
+				<path d="M9 18l6-6-6-6" />
+			</svg>
+		</div>
+
+		<div id="intro-bubble" data-link="">
+			<div class="robot-icon">
+				<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<rect x="3" y="8" width="18" height="11" rx="4" stroke="url(#bot-grad)" stroke-width="2" />
+					<path d="M12 8V4" stroke="url(#bot-grad)" stroke-width="2" stroke-linecap="round" />
+					<circle cx="12" cy="4" r="1.5" fill="#00E5FF" />
+					<circle cx="8.5" cy="13.5" r="1.5" fill="#00E5FF" />
+					<circle cx="15.5" cy="13.5" r="1.5" fill="#00E5FF" />
+					<path d="M3 13.5H1" stroke="url(#bot-grad)" stroke-width="2" stroke-linecap="round" />
+					<path d="M23 13.5H21" stroke="url(#bot-grad)" stroke-width="2" stroke-linecap="round" />
+					<defs>
+						<linearGradient id="bot-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+							<stop stop-color="#7C4DFF" />
+							<stop offset="1" stop-color="#00E5FF" />
+						</linearGradient>
+					</defs>
+				</svg>
+			</div>
+
+			<div id="intro-text"></div>
+
+			<div class="arrow-btn">
+				<span class="cta-spark s1">✦</span>
+				<span class="cta-spark s2">✦</span>
+				<span class="cta-spark s3">✦</span>
+				<svg viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"
+					stroke-linejoin="round">
+					<path d="M5 12h14"></path>
+					<path d="m12 5 7 7-7 7"></path>
+				</svg>
+			</div>
+		</div>
+
+		<button id="fab" aria-label="AI 챗봇 캐릭터">
+			<canvas id="bot-canvas"></canvas>
+		</button>
+	</div>
+
+	<script>
+		/* AI 시리 챗봇 애니메이션 및 로직 */
+		(function () {
+			const c = document.getElementById('bot-canvas');
+			const ctx = c.getContext('2d');
+			let w, h, cx, cy, baseR;
+
+			function resize() {
+				const dpr = window.devicePixelRatio || 1;
+				const rect = c.parentElement.getBoundingClientRect();
+				w = rect.width;
+				h = rect.height;
+				c.width = w * dpr;
+				c.height = h * dpr;
+				ctx.setTransform(1, 0, 0, 1, 0, 0);
+				ctx.scale(dpr, dpr);
+				cx = w / 2;
+				cy = h / 2;
+				baseR = Math.min(w, h) * 0.48;
+			}
+
+			window.addEventListener('resize', resize);
+			resize();
+
+			let audioLevel = 0;
+
+			// Microphone request removed to prevent popup
+			function simulateAudio() {
+				const targetLevel = Math.random() * 0.3;
+				audioLevel += (targetLevel - audioLevel) * 0.2;
+				requestAnimationFrame(simulateAudio);
+			}
+			simulateAudio();
+
+			const ribbons = [{
+					r: 255,
+					g: 30,
+					b: 100,
+					rx: 0.75,
+					ry: 0.28,
+					ox: -0.05,
+					oy: 0.2,
+					rot: 0.15,
+					spd: 0.7,
+					dir: 1,
+					alpha: 0.6
+				},
+				{
+					r: 40,
+					g: 255,
+					b: 150,
+					rx: 0.75,
+					ry: 0.28,
+					ox: 0.05,
+					oy: -0.2,
+					rot: -0.15,
+					spd: 0.6,
+					dir: -1,
+					alpha: 0.5
+				},
+				{
+					r: 0,
+					g: 220,
+					b: 255,
+					rx: 0.8,
+					ry: 0.3,
+					ox: 0.1,
+					oy: 0.0,
+					rot: -0.3,
+					spd: 0.9,
+					dir: 1,
+					alpha: 0.4
+				},
+				{
+					r: 120,
+					g: 30,
+					b: 255,
+					rx: 0.85,
+					ry: 0.4,
+					ox: -0.1,
+					oy: 0.15,
+					rot: 0.25,
+					spd: 0.8,
+					dir: -1,
+					alpha: 0.5
+				},
+				{
+					r: 255,
+					g: 255,
+					b: 255,
+					rx: 0.7,
+					ry: 0.2,
+					ox: 0.0,
+					oy: 0.0,
+					rot: 0.0,
+					spd: 1.0,
+					dir: 1,
+					alpha: 0.32
+				},
+				{
+					r: 0,
+					g: 120,
+					b: 255,
+					rx: 0.9,
+					ry: 0.6,
+					ox: 0.0,
+					oy: -0.1,
+					rot: 0.35,
+					spd: 0.7,
+					dir: -1,
+					alpha: 0.4
+				},
+				{
+					r: 255,
+					g: 80,
+					b: 180,
+					rx: 0.75,
+					ry: 0.25,
+					ox: 0.15,
+					oy: -0.1,
+					rot: 0.5,
+					spd: 1.2,
+					dir: 1,
+					alpha: 0.55
+				},
+				{
+					r: 0,
+					g: 255,
+					b: 220,
+					rx: 0.65,
+					ry: 0.18,
+					ox: -0.12,
+					oy: 0.08,
+					rot: -0.6,
+					spd: 1.4,
+					dir: -1,
+					alpha: 0.5
+				},
+				{
+					r: 120,
+					g: 30,
+					b: 255,
+					rx: 0.85,
+					ry: 0.4,
+					ox: -0.1,
+					oy: 0.15,
+					rot: 0.25,
+					spd: 0.8,
+					dir: -1,
+					alpha: 0.5
+				},
+				{
+					r: 40,
+					g: 255,
+					b: 150,
+					rx: 0.75,
+					ry: 0.28,
+					ox: 0.05,
+					oy: -0.2,
+					rot: -0.15,
+					spd: 0.6,
+					dir: -1,
+					alpha: 0.5
+				},
+				{
+					r: 0,
+					g: 220,
+					b: 255,
+					rx: 0.8,
+					ry: 0.3,
+					ox: 0.1,
+					oy: 0.0,
+					rot: -0.3,
+					spd: 0.9,
+					dir: 1,
+					alpha: 0.4
+				}
+			];
+
+			let lastT = 0;
+			let effectiveTime = 0;
+			let auraIntensity = 0;
+			let startTime = 0;
+			window.botState = {
+				isThinking: false
+			};
+
+			function draw(t) {
+				requestAnimationFrame(draw);
+				if (startTime === 0) startTime = t;
+				let dt = t - lastT;
+				if (lastT === 0) dt = 16;
+				lastT = t;
+
+				if (window.botState.isThinking) {
+					auraIntensity += (1 - auraIntensity) * 0.08;
+				} else {
+					auraIntensity += (0 - auraIntensity) * 0.08;
+				}
+
+				let burst = 0;
+				let elapsed = t - startTime;
+				if (elapsed < 200) {
+					burst = (1 - (elapsed / 200)) * 20;
+				}
+
+				let speedMult = 1 + ((3.5 + Math.sin(t * 0.006) * 2.5) - 1) * auraIntensity + burst;
+
+				if (auraIntensity > 0.01) {
+					let pulse = Math.sin(t * 0.008) * 0.5 + 0.5;
+					let ringAngle = (t * 0.1) % 360;
+					let spread = 25 + pulse * 60;
+					let wAlpha = 1.0 * auraIntensity;
+					let c1Alpha = 1.0 * auraIntensity;
+					let pAlpha = 0.9 * auraIntensity;
+					let c2Alpha = 0.7 * auraIntensity;
+					let baseAlpha = Math.max(0, 1 - auraIntensity);
+
+					document.getElementById('fab').style.background =
+						'conic-gradient(from ' + ringAngle + 'deg, rgba(255, 255, 255, ' + (1.0 * auraIntensity) +
+						') 0%, rgba(220, 250, 255, ' + (0.8 * auraIntensity) + ') 50%, rgba(255, 255, 255, ' + (1.0 *
+						auraIntensity) + ') 100%) border-box, ' +
+						'linear-gradient(90deg, rgba(0, 229, 255, ' + (0.6 * baseAlpha) + '), rgba(255, 51, 204, ' + (0.6 *
+							baseAlpha) + ')) border-box';
+					document.getElementById('fab').style.boxShadow =
+						'0 0 ' + ((5 + pulse * 5) * auraIntensity) + 'px rgba(255, 255, 255, ' + wAlpha + '), ' +
+						'0 0 ' + ((15 + pulse * 20) * auraIntensity) + 'px rgba(255, 255, 255, ' + wAlpha + '), ' +
+						'0 0 ' + ((spread * 0.8) * auraIntensity) + 'px rgba(255, 255, 255, ' + (wAlpha * 0.9) + '), ' +
+						'0 0 ' + (spread * auraIntensity) + 'px rgba(240, 255, 255, ' + c1Alpha + '), ' +
+						'0 0 ' + ((spread * 1.5) * auraIntensity) + 'px rgba(150, 245, 255, ' + pAlpha + '), ' +
+						'0 0 ' + ((spread * 2.5) * auraIntensity) + 'px rgba(0, 229, 255, ' + c2Alpha + '), ' +
+						'0 0 15px rgba(0, 229, 255, ' + (0.5 * baseAlpha) + '), ' +
+						'0 0 15px rgba(255, 51, 204, ' + (0.3 * baseAlpha) + '), ' +
+						'0 0 30px rgba(0, 229, 255, ' + (0.3 * baseAlpha) + '), ' +
+						'inset 0 0 15px rgba(0, 229, 255, ' + (0.1 * baseAlpha) + ')';
+				} else {
+					if (document.getElementById('fab').style.background) {
+						document.getElementById('fab').style.background = '';
+						document.getElementById('fab').style.boxShadow = '';
+					}
+				}
+
+				effectiveTime += dt * Math.max(0.1, speedMult);
+
+				ctx.clearRect(0, 0, w, h);
+
+				const R = baseR * (1 + audioLevel * 0.15);
+				const time = effectiveTime * 0.0008;
+
+				ctx.save();
+				ctx.beginPath();
+				ctx.arc(cx, cy, R, 0, Math.PI * 2);
+				ctx.clip();
+
+				// 더 깊은 진한 남색 배경
+				ctx.fillStyle = "#010a26";
+				ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+
+				ctx.globalCompositeOperation = "lighter";
+
+				ribbons.forEach((rib, i) => {
+					// 복잡한 움직임을 위해 sin/cos 함수 추가
+					const angle = rib.rot + (time * rib.dir * rib.spd) + Math.sin(time * 1.8 + i) * 0.2;
+					const width = R * rib.rx * (1 + Math.sin(time * 2.2 + i * 2) * 0.2);
+					const height = R * rib.ry * (1 + Math.cos(time * 1.9 + i) * 0.25);
+
+					const px = cx + (R * rib.ox) + Math.sin(time * 1.8 + i) * R * 0.18 + Math.cos(time * 2.7 + i) * R * 0.08;
+					const py = cy + (R * rib.oy) + Math.cos(time * 1.6 + i) * R * 0.18 + Math.sin(time * 2.4 + i) * R * 0.08;
+
+					ctx.beginPath();
+					// 타원을 물결 모양으로 보이게 하기 위해 두꺼운 선으로 그리기
+					ctx.ellipse(px, py, width, height, angle, 0, Math.PI * 2);
+
+					const grad = ctx.createRadialGradient(px, py, 0, px, py, width);
+					grad.addColorStop(0, 'rgba(' + rib.r + ', ' + rib.g + ', ' + rib.b + ', ' + rib.alpha + ')');
+					grad.addColorStop(1, 'rgba(' + rib.r + ', ' + rib.g + ', ' + rib.b + ', 0.01)');
+
+					ctx.fillStyle = grad;
+					ctx.fill();
+				});
+
+				// 코어 로직
+				const coreX = cx + Math.sin(time * 1.2) * R * 0.15 + Math.cos(time * 2.6) * R * 0.05;
+				const coreY = cy + Math.cos(time * 1.4) * R * 0.15 + Math.sin(time * 2.2) * R * 0.05;
+
+				const core = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, R * 0.5);
+				core.addColorStop(0, "rgba(255, 255, 255, 0.55)");
+				core.addColorStop(0.2, "rgba(255, 255, 255, 0.25)");
+				core.addColorStop(0.5, "rgba(255, 255, 255, 0.05)");
+				core.addColorStop(0.5, "rgba(255, 255, 255, 0.1)");
+				core.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+				ctx.fillStyle = core;
+				ctx.beginPath();
+				ctx.arc(coreX, coreY, R * 0.5, 0, Math.PI * 2);
+				ctx.fill();
+
+				// 플레어
+				const flareAngle = time * -0.6;
+				const flareWidth = R * 0.85 * (1 + Math.sin(time * 3) * 0.1);
+
+				ctx.beginPath();
+				ctx.ellipse(coreX, coreY, flareWidth, R * 0.015, flareAngle, 0, Math.PI * 2);
+				const flare = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, flareWidth);
+				flare.addColorStop(0, "rgba(255, 255, 255, 0.35)");
+				flare.addColorStop(1, "rgba(255, 255, 255, 0)");
+				ctx.fillStyle = flare;
+				ctx.fill();
+
+				ctx.restore();
+
+				ctx.globalCompositeOperation = "source-over";
+				ctx.beginPath();
+				ctx.arc(cx, cy, R, 0, Math.PI * 2);
+
+				// 섬세한 유리 가장자리 효과
+				const glass = ctx.createRadialGradient(cx, cy, R * 0.75, cx, cy, R);
+				glass.addColorStop(0, "rgba(255, 255, 255, 0)");
+				glass.addColorStop(0.85, "rgba(255, 255, 255, 0.08)");
+				glass.addColorStop(0.95, "rgba(255, 255, 255, 0.25)");
+				glass.addColorStop(1, "rgba(255, 255, 255, 0.4)");
+				ctx.fillStyle = glass;
+				ctx.fill();
+
+				const edgeGlow = 0.45 + Math.sin(time * 1.5) * 0.12;
+
+				ctx.shadowBlur = 15;
+				ctx.shadowColor = "rgba(255,255,255,0.7)";
+				ctx.lineWidth = 0.8;
+				ctx.strokeStyle = 'rgba(255,255,255,' + edgeGlow + ')';
+				ctx.stroke();
+
+				ctx.shadowBlur = 0;
+			}
+
+			requestAnimationFrame(draw);
+		})();
+
+		/* 텍스트 타이핑 효과 및 버블 UI 로직 */
+		(function () {
+			const dimOverlay = document.getElementById('bottom-dim-overlay');
+			const introBubble = document.getElementById('intro-bubble');
+			const introText = document.getElementById('intro-text');
+			const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+			const icon1 =
+				'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="8" width="18" height="11" rx="4" stroke="url(#sparkle-grad-1)" stroke-width="2" /><path d="M12 8V4" stroke="url(#sparkle-grad-1)" stroke-width="2" stroke-linecap="round" /><circle cx="12" cy="4" r="1.5" fill="url(#sparkle-grad-1)" /><circle cx="8.5" cy="13.5" r="1.5" fill="url(#sparkle-grad-1)" /><circle cx="15.5" cy="13.5" r="1.5" fill="url(#sparkle-grad-1)" /><path d="M3 13.5H1" stroke="url(#sparkle-grad-1)" stroke-width="2" stroke-linecap="round" /><path d="M23 13.5H21" stroke="url(#sparkle-grad-1)" stroke-width="2" stroke-linecap="round" /><defs><linearGradient id="sparkle-grad-1" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff" /><stop offset="1" stop-color="#6c22f5" /></linearGradient></defs></svg>';
+			const icon2 =
+				'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="2" width="14" height="20" rx="3" stroke="url(#sparkle-grad-2)" stroke-width="2"/><path d="M11 19H13" stroke="url(#sparkle-grad-2)" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="11" r="3" stroke="url(#sparkle-grad-2)" stroke-width="2"/><defs><linearGradient id="sparkle-grad-2" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff" /><stop offset="1" stop-color="#6c22f5" /></linearGradient></defs></svg>';
+			const icon3 =
+				'<svg viewBox="-1.5 -1.5 27 27" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="bulb-glow" d="M12 4C9.24 4 7 6.24 7 9c0 2.08 1.19 3.88 2.93 4.78L10 16h4l.07-2.22C15.81 12.88 17 11.08 17 9c0-2.76-2.24-5-5-5z" fill="url(#sparkle-grad-3)"/><path d="M12 4C9.24 4 7 6.24 7 9c0 2.08 1.19 3.88 2.93 4.78L10 16h4l.07-2.22C15.81 12.88 17 11.08 17 9c0-2.76-2.24-5-5-5z" stroke="url(#sparkle-grad-3)" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 16h4M10.5 18.5h3M11 21h2" stroke="url(#sparkle-grad-3)" stroke-width="1.7" stroke-linecap="round"/><line class="bulb-ray" x1="12" y1="2" x2="12" y2="0" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="16.8" y1="4.2" x2="18.2" y2="2.8" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="18.8" y1="9" x2="20.6" y2="9" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="7.2" y1="4.2" x2="5.8" y2="2.8" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><line class="bulb-ray" x1="5.2" y1="9" x2="3.4" y2="9" stroke="url(#sparkle-grad-3)" stroke-width="1.6" stroke-linecap="round"/><defs><linearGradient id="sparkle-grad-3" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff"/><stop offset="1" stop-color="#6c22f5"/></linearGradient></defs></svg>';
+			const icon4 =
+				'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.5C17.2467 21.5 21.5 17.2467 21.5 12C21.5 6.75329 17.2467 2.5 12 2.5C6.75329 2.5 2.5 6.75329 2.5 12C2.5 17.2467 6.75329 21.5 12 21.5Z" stroke="url(#sparkle-grad-4)" stroke-width="2"/><circle cx="8" cy="10" r="1.5" fill="url(#sparkle-grad-4)"/><circle cx="12" cy="7" r="1.5" fill="url(#sparkle-grad-4)"/><circle cx="16" cy="10" r="1.5" fill="url(#sparkle-grad-4)"/><path d="M8 15C9.5 16.5 14.5 16.5 16 15" stroke="url(#sparkle-grad-4)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="sparkle-grad-4" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#00d2ff" /><stop offset="1" stop-color="#6c22f5" /></linearGradient></defs></svg>';
+
+			var wp_json = (
+				'{"client":[{"logo":1,"data":[{"logo":"evera-1124614761000.png","desc":"수술없이 자연스럽게 이브라","price":"","pnm":"이브샵","t0":"","desc_web":"가슴전문 쇼핑몰, 브레스트케어용품 판매","purl":"1_shop_with_popup.html","img":"//img.mobon.net/ad/efile/d542f917af29284d6e215529aad933e0_i250_250.jpg","pcode":"x","site_name":"이브샵","logo2":"evera-320936086000.png","site_desc1":"사이트설명","site_desc2":"사이트설명2","site_desc3":"사이트설명3","site_desc4":"사이트설명4","chatbotMent":"전 세계 사람들이 <b>가장 많이 쓰는 스마트폰</b>은?","cta_text":"바로가기"}],"length":1,"target":"UM","site_title":"스타일베리","oslink":""}]} '
+				);
+			const parsedData = JSON.parse(wp_json);
+			const clientData = parsedData.client[0].data[0];
+
+			const messages = [{
+
+				text: "<canvas class='sparkle-canvas' width='42' height='42' style='vertical-align: middle; margin-top: -3px; margin-right: 1px; width: 14px; height: 12px;'></canvas> 이 상품과 어울리는 <b style='background: linear-gradient(90deg, #b077ff, #00d2ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'><br>제품을 코디</b>해 드릴까요?",
+				link: clientData.purl,
+				icon: '<div class="custom-icon" style="width: 56px; height: 56px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, #00d2ff, #6c22f5); box-sizing: border-box;"><img src="11.png" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #eee;"></div>'
+			}];
+
+			let msgIndex = 0;
+
+			async function typeText(msg) {
+				const htmlText = msg.text;
+				const topText = msg.topText || '';
+
+				window.botState.isThinking = true;
+				introText.className = 'is-loading';
+
+				let hiddenHTML = '';
+				if (topText) hiddenHTML += '<div class="text-top" style="visibility: hidden;">' + topText + '</div>';
+				hiddenHTML += '<div class="text-bottom" style="visibility: hidden;">' + htmlText + '</div>';
+
+				introText.innerHTML = hiddenHTML +
+					'<div class="typing-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center;"><div class="loading-dots"><span></span><span></span><span></span></div></div>';
+
+				await sleep(1500);
+
+				setTimeout(() => {
+					window.botState.isThinking = false;
+				}, 500);
+
+				introText.className = 'is-typing';
+				const typingContainer = introText.querySelector('.typing-container');
+
+				let htmlContent = '';
+				if (topText) htmlContent += '<div class="text-top">' + topText + '</div>';
+				htmlContent += '<div class="text-bottom">';
+
+				let currentHTML = '';
+				let i = 0;
+				while (i < htmlText.length) {
+					if (htmlText[i] === '<') {
+						let end = htmlText.indexOf('>', i);
+						if (end !== -1) {
+							currentHTML += htmlText.substring(i, end + 1);
+							i = end + 1;
+							continue;
+						}
+					}
+					currentHTML += htmlText[i];
+					typingContainer.innerHTML = htmlContent + currentHTML + '<span class="cursor-bar"></span></div>';
+					await sleep(45);
+					i++;
+				}
+
+				introText.className = 'is-blinking';
+			}
+
+			async function startSequence() {
+				const closeBtn = document.querySelector('.close-button');
+				if (closeBtn) {
+					closeBtn.classList.add('show');
+				}
+
+				introBubble.classList.add('show');
+				dimOverlay.classList.add('show');
+
+				const msg = messages[0];
+				introBubble.dataset.link = msg.link;
+
+				const iconContainer = document.querySelector('.robot-icon');
+				if (iconContainer && msg.icon) {
+					iconContainer.innerHTML = msg.icon;
+					iconContainer.dataset.initialized = 'true';
+				}
+
+				await typeText(msg);
+			}
+
+			introBubble.addEventListener('click', () => {
+				const link = introBubble.dataset.link;
+				if (link) window.open(link, '_blank');
+			});
+
+			const closeWrapper = document.querySelector('.close-button');
+			if (closeWrapper) {
+				const infoBtn = closeWrapper.querySelector('.info-btn');
+				const xBtn = closeWrapper.querySelector('.x-btn');
+
+				if (infoBtn) {
+					infoBtn.addEventListener('click', (e) => {
+						e.stopPropagation();
+						const policyBubble = document.querySelector('.policy-bubble');
+						if (policyBubble) {
+							policyBubble.classList.toggle('show');
+						}
+					});
+				}
+
+				// 외부 클릭 시 말풍선 닫기
+				document.addEventListener('click', (e) => {
+					const policyBubble = document.querySelector('.policy-bubble');
+					if (policyBubble && policyBubble.classList.contains('show') && !e.target.closest('.policy-bubble')) {
+						policyBubble.classList.remove('show');
+					}
+				});
+
+				if (xBtn) {
+					xBtn.addEventListener('click', (e) => {
+						e.stopPropagation();
+						if (closeWrapper.classList.contains('expand')) {
+							document.getElementById('fab-wrap').style.display = 'none';
+							const dimOverlay = document.getElementById('bottom-dim-overlay');
+							if (dimOverlay) dimOverlay.classList.remove('show');
+							if (window !== window.parent) {
+								setTimeout(() => {
+									window.parent.postMessage('closeIframe', '*');
+								}, 1500);
+							}
+						} else {
+							closeWrapper.classList.add('expand');
+						}
+					});
+				}
+
+				closeWrapper.addEventListener('click', (e) => {
+					if (!closeWrapper.classList.contains('expand')) {
+						e.stopPropagation();
+						closeWrapper.classList.add('expand');
+					}
+				});
+			}
+
+			const fabWrap = document.getElementById('fab-wrap');
+			if (fabWrap) {
+				fabWrap.addEventListener('click', (e) => {
+					if (e.target.closest('.close-button') || e.target.closest('#intro-bubble')) return;
+					if (!introBubble.classList.contains('show')) {
+						startSequence();
+					}
+				});
+			}
+
+			if (window === window.parent) {
+				startSequence();
+			} else {
+				window.addEventListener('message', (event) => {
+					if (event.data === 'showBubble') {
+						if (!introBubble.classList.contains('show')) {
+							startSequence();
+						}
+					} else if (event.data === 'closePolicyBubble') {
+						const policyBubble = document.querySelector('.policy-bubble');
+						if (policyBubble && policyBubble.classList.contains('show')) {
+							policyBubble.classList.remove('show');
+						}
+					}
+				});
+			}
+		})();
+
+		/* 반짝이는 캔버스 아이콘 로직 */
+		(function () {
+			let time = 0;
+
+			function drawSparkles() {
+				requestAnimationFrame(drawSparkles);
+				time += 0.05;
+				const canvases = document.querySelectorAll('.sparkle-canvas');
+				canvases.forEach(canvas => {
+					if (!canvas.getContext) return;
+					const ctx = canvas.getContext('2d');
+					const w = canvas.width;
+					const h = canvas.height;
+					ctx.clearRect(0, 0, w, h);
+
+					ctx.save();
+					ctx.translate(w / 2, h / 2);
+
+					// Main star
+					const scale1 = 0.6 + Math.sin(time) * 0.4;
+					ctx.save();
+					ctx.scale(scale1, scale1);
+					ctx.rotate(time * 0.5);
+					drawStar(ctx, w, h);
+					ctx.fillStyle = '#00E5FF'; // 하늘색
+					ctx.fill();
+					ctx.restore();
+
+					// Inner white glow
+					ctx.save();
+					ctx.scale(scale1 * 0.5, scale1 * 0.5);
+					ctx.rotate(time * 0.5);
+					drawStar(ctx, w, h);
+					ctx.fillStyle = '#FFFFFF';
+					ctx.fill();
+					ctx.restore();
+
+					// Small secondary star
+					const scale2 = 0.3 + Math.sin(time + 2) * 0.2;
+					ctx.save();
+					ctx.translate(w * 0.3, -h * 0.3);
+					ctx.scale(scale2, scale2);
+					ctx.rotate(-time * 0.8);
+					drawStar(ctx, w, h);
+					ctx.fillStyle = '#FFFFFF';
+					ctx.fill();
+					ctx.restore();
+
+					ctx.restore();
+				});
+			}
+
+			function drawStar(ctx, w, h) {
+				ctx.beginPath();
+				ctx.moveTo(0, -h / 2);
+				ctx.quadraticCurveTo(w / 12, -h / 12, w / 2, 0);
+				ctx.quadraticCurveTo(w / 12, h / 12, 0, h / 2);
+				ctx.quadraticCurveTo(-w / 12, h / 12, -w / 2, 0);
+				ctx.quadraticCurveTo(-w / 12, -h / 12, 0, -h / 2);
+			}
+
+			requestAnimationFrame(drawSparkles);
+		})();
+	</script>
 </body>
 
 </html>
