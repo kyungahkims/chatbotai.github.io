@@ -11,8 +11,6 @@
     <iframe src="https://m.dabagirl.co.kr/" style="position:fixed; top:0; left:0; width:100%; height:100vh; border:none; z-index:0;"></iframe>
     <div id="scroll-trap" style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:1; display:none;"></div>
 
-    <div id="scroll-trap" style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:1; display:none;"></div>
-
     <!-- ================================================================
      AD BANNER POPUP
 ================================================================ -->
@@ -39,12 +37,14 @@
                     <div id="mb_fab">
                         <canvas id="mb_bot-canvas"></canvas>
                     </div>
-                    <div class="mb_ad-title">
-                        오늘의 추천 코디
+                    <div class="mb_ad-header-text">
+                        <div class="mb_ad-title">
+                            오늘의 추천 코디
+                        </div>
+                        <div class="mb_ad-subtitle">
+                            AI가 이 상품과 어울리는 코디를 추천했어요
+                        </div>
                     </div>
-                </div>
-                <div class="mb_ad-subtitle">
-                    AI가 이 상품과 어울리는 코디를 추천했어요
                 </div>
             </div>
             <button class="mb_ad-close-btn" id="mb_adCloseBtn">
@@ -88,7 +88,6 @@
         </div>
     </div>
 
-
     <style>
         /* ================================================================
            AD BANNER POPUP - NEW LAYOUT
@@ -123,7 +122,7 @@
             flex-direction: column;
             background: #14141D;
             border-radius: 30px 30px 0 0;
-            padding: 16px 14px 6px 14px;
+            padding: 12px 16px 12px 16px;
             z-index: 99001;
             box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6), inset 0 2px 10px rgba(255, 255, 255, 0.05);
             transition: transform 0.5s cubic-bezier(0.25, 1.2, 0.3, 1);
@@ -192,6 +191,12 @@
             gap: 4px;
         }
 
+                .mb_ad-header-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
         .mb_ad-header-top {
             display: flex;
             align-items: center;
@@ -231,6 +236,8 @@
             font-size: 16px;
             font-weight: 800;
             background: linear-gradient(90deg, #00E5FF, #b077ff);
+            width: fit-content;
+            filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.7));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             line-height: 1.2;
@@ -307,10 +314,10 @@
         }
 
         .mb_ad-recommend-container {
-            padding: 0px 2px 8px 2px;
+            padding: 0px 2px 6px 2px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
             overflow-y: auto;
             max-height: calc(100% - 70px);
         }
@@ -331,7 +338,7 @@
         .mb_ad-recommend-section {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
         }
 
         .mb_ad-section-title {
@@ -350,12 +357,12 @@
 
         .mb_ad-card-row {
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
 
         .mb_ad-product-card {
             background: #1A1A24;
-            border-radius: 6px;
+            border-radius: 8px;
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -371,7 +378,7 @@
         }
 
         .mb_ad-product-info {
-            padding: 5px 6px 6px 6px;
+            padding: 4px 5px 5px 5px;
             display: flex;
             flex-direction: column;
             gap: 1px;
@@ -381,6 +388,9 @@
             color: #b3b3b3;
             font-size: 11px;
             font-weight: 400;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .mb_ad-product-price {
@@ -414,7 +424,7 @@
             background: rgba(30, 30, 50, 0.6);
             border: 1px solid rgba(108, 34, 245, 0.5);
             border-radius: 10px;
-            padding: 8px 13px;
+            padding: 6px 10px;
             flex: 1;
             overflow-y: hidden;
             height: auto;
@@ -531,7 +541,7 @@
             }
 
             .mb_ad-speech-bubble {
-                padding: 8px;
+                padding: 6px;
                 height: 75px;
                 border-radius: 10px;
             }
